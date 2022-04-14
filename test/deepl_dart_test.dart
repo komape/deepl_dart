@@ -1,9 +1,13 @@
+import 'dart:io';
+
 import 'package:deepl_dart/deepl_dart.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('Translator Tests', () {
-    Translator translator = Translator(authKey: '<your_auth_key>');
+    String? authKey = Platform.environment['AUTH_KEY'];
+    assert(authKey != null, 'found no authKey in environment');
+    Translator translator = Translator(authKey: authKey!);
 
     test('Translate Singular Text Test', () async {
       TextResult result = await translator.translateTextSingular(

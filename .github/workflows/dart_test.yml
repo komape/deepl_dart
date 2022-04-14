@@ -13,6 +13,7 @@ on:
 
 jobs:
   build:
+    environment: test_env
     runs-on: ubuntu-latest
 
     steps:
@@ -39,4 +40,4 @@ jobs:
       # package:test for this step to succeed. Note that Flutter projects will
       # want to change this to 'flutter test'.
       - name: Run tests
-        run: dart test
+        run: AUTH_KEY=${{ secrets.AUTH_KEY }} dart test
