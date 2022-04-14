@@ -1,8 +1,5 @@
-/// Support for doing something awesome.
-///
-/// More dartdocs go here.
 library deepl_dart;
 
-export 'src/deepl_dart_base.dart';
+export 'src/translator.dart';
 
-// TODO: Export any libraries intended for clients of this package.
+export 'src/model/text_result.dart';

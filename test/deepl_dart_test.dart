@@ -9,7 +9,8 @@ void main() {
   group('Translator Tests', () {
     // add your auth key as environment variable or here
     // DO NOT FORGET TO DELETE THE KEY BEFORE COMMITTING!
-    String authKey = Platform.environment['AUTH_KEY'] ?? '<your_auth_key>';
+    String authKey = Platform.environment['AUTH_KEY'] ??
+        '965937ae-7916-c3f9-4b90-426f9898cede:fx';
     assert(authKey != '<your_auth_key>', 'found no authentication key');
     Translator translator = Translator(authKey: authKey);
 
