@@ -27,7 +27,7 @@ class TranslatorOptions {
 }
 
 /// Options that can be specified when translating text.
-abstract class TranslateTextOptions {
+class TranslateTextOptions {
   /// Specifies how input translation text should be split into sentences.
   /// - 'on': Input translation text will be split into sentences using both
   /// newlines and punctuation, this is the default behaviour.
@@ -61,6 +61,17 @@ abstract class TranslateTextOptions {
 
   /// List of XML tags containing content that should not be translated.
   String? ignoreTags;
+
+  TranslateTextOptions(
+      {this.splitSentences,
+      this.preserveFormatting,
+      this.formality,
+      this.glossaryId,
+      this.tagHandling,
+      this.outlineDetection,
+      this.splittingTags,
+      this.nonSplittingTags,
+      this.ignoreTags});
 }
 
 /// Language codes that may be used as a source or target language.

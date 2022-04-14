@@ -87,6 +87,21 @@ class TextResult {
   final String detectedSourceLang;
 
   TextResult({required this.text, required this.detectedSourceLang});
+
+  @override
+  String toString() =>
+      'TextResult[text: $text, detectedSourceLang: $detectedSourceLang]';
+
+  @override
+  bool operator ==(Object other) {
+    if (other is! TextResult) return false;
+    return text == other.text &&
+        detectedSourceLang.toLowerCase() ==
+            other.detectedSourceLang.toLowerCase();
+  }
+
+  @override
+  int get hashCode => text.hashCode + detectedSourceLang.toLowerCase().hashCode;
 }
 
 /// Validates and prepares URLSearchParams for arguments common to text and
@@ -276,17 +291,15 @@ class Translator {
   ///
   /// Fulfills with a [TextResult] object; use the `TextResult.text` property to
   /// access the translated text.
-  Future<TextResult> translateTextSingular({
-    required String text,
+  Future<TextResult> translateTextSingular(
+    String text,
+    String targetLang, {
     String? sourceLang,
-    required String targetLang,
     TranslateTextOptions? options,
   }) async {
-    List<TextResult> textResults = await translateTextList(
-        texts: [text],
-        targetLang: targetLang,
-        sourceLang: sourceLang,
-        options: options);
+    assert(text.isNotEmpty, 'text parameter must be a non-empty string');
+    List<TextResult> textResults = await translateTextList([text], targetLang,
+        sourceLang: sourceLang, options: options);
     return textResults[0];
   }
 
@@ -305,13 +318,15 @@ class Translator {
   ///
   /// Fulfills with an array of TextResult objects corresponding to input texts;
   /// use the `TextResult.text` property to access the translated text.
-  Future<List<TextResult>> translateTextList({
-    required List<String> texts,
+  Future<List<TextResult>> translateTextList(
+    List<String> texts,
+    String targetLang, {
     String? sourceLang,
-    required String targetLang,
     TranslateTextOptions? options,
   }) async {
-    assert(texts.isNotEmpty, 'text parameter must not be a non-empty string');
+    assert(texts.isNotEmpty, 'texts parameter must not be a non-empty list');
+    assert(texts.every((t) => t.isNotEmpty),
+        'texts parameter must not be an array of non-empty strings');
     Map<String, String> urlSearchParams = _buildURLSearchParams(
       sourceLang: sourceLang,
       targetLang: targetLang,
