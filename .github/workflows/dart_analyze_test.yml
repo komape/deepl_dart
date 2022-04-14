@@ -3,7 +3,7 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Dart Test
+name: Dart Analyze & Test
 
 on:
   push:
