@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:deepl_dart/deepl_dart.dart';
 import 'package:deepl_dart/src/errors.dart';
+import 'package:deepl_dart/src/model/document_status.dart';
+import 'package:deepl_dart/src/model/document_translate_options.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -21,15 +23,15 @@ void main() {
         expect(
             translator.translateTextSingular(sampleTextEn, 'de'),
             completion(equals(
-                TextResult(text: sampleTextDe, detectedSourceLang: 'en'))));
+                TextResult(text: sampleTextDe, detectedSourceLanguage: 'en'))));
       });
 
       test('translate list of text', () {
         expect(
             translator.translateTextList([sampleTextEn, sampleTextPt], 'de'),
             completion(equals([
-              TextResult(text: sampleTextDe, detectedSourceLang: 'en'),
-              TextResult(text: sampleTextPt, detectedSourceLang: 'pt')
+              TextResult(text: sampleTextDe, detectedSourceLanguage: 'en'),
+              TextResult(text: sampleTextPt, detectedSourceLanguage: 'pt')
             ])));
       });
 
@@ -38,7 +40,7 @@ void main() {
             translator.translateTextSingular(sampleTextEn, 'de',
                 sourceLang: 'en'),
             completion(equals(
-                TextResult(text: sampleTextDe, detectedSourceLang: 'en'))));
+                TextResult(text: sampleTextDe, detectedSourceLanguage: 'en'))));
       });
 
       test('test deprecated language codes', () {
@@ -74,9 +76,9 @@ void main() {
         String informal = 'Wie geht es dir?';
 
         TextResult formalResult =
-            TextResult(text: formal, detectedSourceLang: 'EN');
+            TextResult(text: formal, detectedSourceLanguage: 'EN');
         TextResult informalResult =
-            TextResult(text: informal, detectedSourceLang: 'EN');
+            TextResult(text: informal, detectedSourceLanguage: 'EN');
 
         expect(translator.translateTextSingular(input, 'de'),
             completion(equals(formalResult)));
@@ -112,22 +114,24 @@ void main() {
             translator.translateTextSingular(input, 'de',
                 options: TranslateTextOptions(splitSentences: 'off')),
             completion(equals(
-                TextResult(text: oneSentence, detectedSourceLang: 'en'))));
+                TextResult(text: oneSentence, detectedSourceLanguage: 'en'))));
         expect(
             translator.translateTextSingular(input, 'de',
                 options: TranslateTextOptions(splitSentences: 'on')),
             completion(equals(TextResult(
-                text: twoSentencesWithLineBreak, detectedSourceLang: 'en'))));
+                text: twoSentencesWithLineBreak,
+                detectedSourceLanguage: 'en'))));
         expect(
             translator.translateTextSingular(input, 'de',
                 options: TranslateTextOptions(splitSentences: 'nonewlines')),
             completion(equals(
-                TextResult(text: twoSentences, detectedSourceLang: 'en'))));
+                TextResult(text: twoSentences, detectedSourceLanguage: 'en'))));
         expect(
             translator.translateTextSingular(input, 'de',
                 options: TranslateTextOptions(splitSentences: 'default')),
             completion(equals(TextResult(
-                text: twoSentencesWithLineBreak, detectedSourceLang: 'en'))));
+                text: twoSentencesWithLineBreak,
+                detectedSourceLanguage: 'en'))));
       });
 
       test('translate text with invalid split sentences', () {
@@ -137,5 +141,82 @@ void main() {
             throwsA(isA<DeepLError>()));
       });
     });
+
+    group('Translate Document', () {
+      late File inputFile;
+      late File outputFile;
+
+      setUp(() {
+        inputFile = File('input.txt');
+        outputFile = File('output.txt');
+      });
+
+      tearDown(() async {
+        await Future.wait([
+          deleteIfExists(inputFile),
+          deleteIfExists(outputFile),
+        ]);
+      });
+
+      test('translate document', () async {
+        inputFile.writeAsStringSync('Hello World');
+        DocumentStatus status =
+            await translator.translateDocument(inputFile, outputFile, 'de');
+        expect(status.done, equals(true));
+        expect(status.ok, equals(true));
+        String translation = outputFile.readAsStringSync();
+        expect(translation, equals('Hallo Welt'));
+      });
+
+      test('translate document with formality', () async {
+        inputFile.writeAsStringSync('How are you?');
+
+        DocumentStatus status = await translator.translateDocument(
+            inputFile, outputFile, 'de',
+            options: DocumentTranslateOptions(formality: 'more'));
+        expect(status.done, equals(true));
+        expect(status.ok, equals(true));
+        String translation = outputFile.readAsStringSync();
+        expect(translation, equals('Wie geht es Ihnen?'));
+
+        status = await translator.translateDocument(inputFile, outputFile, 'de',
+            options: DocumentTranslateOptions(formality: 'default'));
+        expect(status.done, equals(true));
+        expect(status.ok, equals(true));
+        translation = outputFile.readAsStringSync();
+        expect(translation, equals('Wie geht es Ihnen?'));
+
+        status = await translator.translateDocument(inputFile, outputFile, 'de',
+            options: DocumentTranslateOptions(formality: 'less'));
+        expect(status.done, equals(true));
+        expect(status.ok, equals(true));
+        translation = outputFile.readAsStringSync();
+        expect(translation, equals('Wie geht es dir?'));
+      });
+
+      test('translate document with invalid formality', () {
+        inputFile.writeAsStringSync('How are you?');
+
+        expect(
+            translator.translateDocument(inputFile, outputFile, 'de',
+                options: DocumentTranslateOptions(formality: 'invalid')),
+            throwsA(isA<DeepLError>()));
+      });
+
+      test('translate document with source lang equals target lang', () async {
+        inputFile.writeAsStringSync('Hallo Welt');
+
+        expect(
+            translator.translateDocument(inputFile, outputFile, 'de',
+                sourceLang: 'de'),
+            throwsA(isA<DeepLError>()));
+      });
+    });
   });
+}
+
+Future<void> deleteIfExists(File file) async {
+  if (await file.exists()) {
+    await file.delete();
+  }
 }
