@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:deepl_dart/deepl_dart.dart';
 import 'package:deepl_dart/src/errors.dart';
-import 'package:deepl_dart/src/types.dart';
 import 'package:test/test.dart';
 
 void main() {

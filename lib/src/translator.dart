@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:deepl_dart/src/errors.dart';
 import 'package:deepl_dart/src/model/text_result.dart';
+import 'package:deepl_dart/src/model/translate_text_options.dart';
 import 'package:deepl_dart/src/parsing.dart';
-import 'package:deepl_dart/src/types.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
 import 'package:http/retry.dart';
@@ -13,7 +13,6 @@ import 'package:http/retry.dart';
 class Translator {
   late String _serverUrl;
   late Map<String, String> _headers;
-  // late int _minTimeout;
   late http.Client httpClient;
 
   /// Construct a Translator object wrapping the DeepL API using your
@@ -21,14 +20,32 @@ class Translator {
   ///
   /// This does not connect to the API, and returns immediately.
   ///
-  /// Takes [authKey] as specified in your account and [options] to control
-  /// Translator behavior.
-  Translator({required String authKey, TranslatorOptions? options}) {
+  /// Takes [authKey] as specified in your account.
+  ///
+  /// Takes [serverUrl] as base URL of DeepL API, can be overridden for example
+  /// for testing purposes. By default, the correct DeepL API URL is selected
+  /// based on the user account type (free or paid).
+  ///
+  /// Takes HTTP [headers] attached to every HTTP request. By default, no extra
+  /// headers are used. Note that during Translator initialization headers for
+  /// Authorization and User-Agent are added, unless they are overridden in this
+  /// option.
+  ///
+  ///
+  /// Takes [maxRetries] for the maximum number of failed attempts that
+  /// Translator will retry, per request. By default, 5 retries are made.
+  /// Note: only errors due to transient conditions are retried.
+  Translator({
+    required String authKey,
+    String? serverUrl,
+    Map<String, String>? headers,
+    int maxRetries = 5,
+  }) {
     if (authKey.isEmpty) {
       throw DeepLError(message: 'authKey must be a non-empty string');
     }
-    if (options?.serverUrl != null) {
-      _serverUrl = options!.serverUrl!;
+    if (serverUrl != null) {
+      _serverUrl = serverUrl;
     } else if (_isFreeAccountAuthKey(authKey)) {
       _serverUrl = 'https://api-free.deepl.com';
     } else {
@@ -36,11 +53,9 @@ class Translator {
     }
     _headers = {
       'Authorization': 'DeepL-Auth-Key $authKey',
-      'User-Agent': 'deepl-dart/1.0.0',
-      ...(options?.headers ?? {}),
+      'User-Agent': 'deepl-dart/0.1.0',
+      ...(headers ?? {}),
     };
-    // _minTimeout = options?.minTimeout ?? 5000;
-    int maxRetries = options?.maxRetries ?? 5;
     httpClient = RetryClient(http.Client(), retries: maxRetries);
   }
 
