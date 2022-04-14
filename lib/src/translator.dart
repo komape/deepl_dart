@@ -1,10 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:deepl_dart/src/errors.dart';
+import 'package:deepl_dart/src/model/document_handle.dart';
+import 'package:deepl_dart/src/model/document_status.dart';
+import 'package:deepl_dart/src/model/document_translate_options.dart';
+import 'package:deepl_dart/src/model/document_translation_status.dart';
 import 'package:deepl_dart/src/model/text_result.dart';
+import 'package:deepl_dart/src/model/text_result_response.dart';
 import 'package:deepl_dart/src/model/translate_text_options.dart';
-import 'package:deepl_dart/src/parsing.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
 import 'package:http/retry.dart';
@@ -14,7 +19,7 @@ import 'package:http/retry.dart';
 class Translator {
   late String _serverUrl;
   late Map<String, String> _headers;
-  late http.Client httpClient;
+  late http.Client _httpClient;
 
   /// Construct a Translator object wrapping the DeepL API using your
   /// authentication key.
@@ -45,6 +50,7 @@ class Translator {
     if (authKey.isEmpty) {
       throw DeepLError(message: 'authKey must be a non-empty string');
     }
+    authKey = authKey;
     if (serverUrl != null) {
       _serverUrl = serverUrl;
     } else if (_isFreeAccountAuthKey(authKey)) {
@@ -54,10 +60,10 @@ class Translator {
     }
     _headers = {
       'Authorization': 'DeepL-Auth-Key $authKey',
-      'User-Agent': 'deepl-dart/0.1.0',
+      'User-Agent': 'deepl_dart/0.1.0',
       ...(headers ?? {}),
     };
-    httpClient = RetryClient(http.Client(), retries: maxRetries);
+    _httpClient = RetryClient(http.Client(), retries: maxRetries);
   }
 
   /// Translates specified text string into the target language.
@@ -119,12 +125,165 @@ class Translator {
       glossaryId: options?.glossaryId,
     );
     _validateAndAppendTextOptions(urlSearchParams, options);
-    Response translateRes = await httpClient.post(
+    Response translateRes = await _httpClient.post(
         _buildUri(_serverUrl, '/v2/translate', texts, urlSearchParams),
         headers: _headers);
-    await _checkStatusCode(translateRes);
-    List<TextResult> textResults = parseTextResultArray(translateRes.body);
+    await _checkStatusCode(translateRes.statusCode, translateRes.body,
+        reasonPhrase: translateRes.reasonPhrase);
+    List<TextResult> textResults =
+        TextResultResponse.fromJson(jsonDecode(translateRes.body)).translations;
     return textResults;
+  }
+
+  /// Uploads specified document to DeepL to translate into given target
+  /// language, waits for translation to complete, then downloads translated
+  /// document to specified output path.
+  ///
+  /// Takes a [File] as [inputFile] containing file data.
+  ///
+  /// Takes a [File] as [outputFile] to write translated document content.ß
+  /// Existing content in the file will be overwritten.
+  ///
+  /// Takes [sourceLang] language code of input document, or null to use
+  /// auto-detection.
+  ///
+  /// Takes [targetLang] language code of language to translate into.
+  ///
+  /// Takes [options] as optional [DocumentTranslateOptions] object containing
+  /// additional options controlling translation.
+  ///
+  /// Fulfills with a [DocumentStatus] object for the completed translation. You
+  /// can use the [billedCharacters] property to check how many characters were
+  /// billed for the document.
+  ///
+  /// Throws [Error] if no file exists at the input file path.
+  ///
+  ///
+  /// Throws [DocumentTranslationError] if any error occurs during document
+  /// upload, translation or download. The [documentHandle] property of the
+  /// error may be used to recover the document.
+  Future<DocumentStatus> translateDocument(
+    File inputFile,
+    File outputFile,
+    String targetLang, {
+    String? sourceLang,
+    DocumentTranslateOptions? options,
+  }) async {
+    // upload document
+    DocumentHandle documentHandle = await uploadDocument(inputFile, targetLang,
+        sourceLang: sourceLang, options: options);
+    // wait for translation to complete
+    DocumentTranslationStatus translationStatus =
+        await isDocumentTranslationComplete(documentHandle);
+    // download document
+    await downloadDocument(documentHandle, outputFile);
+    // return status
+    return translationStatus.status;
+  }
+
+  /// Uploads specified document to DeepL to translate into target language, and
+  /// returns handle associated with the document.
+  ///
+  /// Takes a [File] as [inputFile].
+  ///
+  /// Takes [sourceLang] language code of input document, or null to use
+  /// auto-detection.
+  ///
+  /// Takes [targetLang] language code of language to translate into.
+  ///
+  /// Takes [options] optional [DocumentTranslateOptions] object containing
+  /// additional options controlling translation.
+  ///
+  /// Fulfills with [DocumentHandle] associated with the in-progress
+  /// translation.
+  Future<DocumentHandle> uploadDocument(
+    File inputFile,
+    String targetLang, {
+    String? sourceLang,
+    DocumentTranslateOptions? options,
+  }) async {
+    Uri uri = _buildUri(_serverUrl, '/v2/document', null, {});
+    http.MultipartRequest request = http.MultipartRequest('POST', uri)
+      ..files.add(await http.MultipartFile.fromPath('file', inputFile.path,
+          filename: options?.filename))
+      ..fields['target_lang'] = targetLang;
+    if (sourceLang != null) {
+      request.fields['source_lang'] = sourceLang;
+    }
+    if (options?.filename != null) {
+      request.fields['filename'] = options!.filename!;
+    }
+    if (options?.formality != null) {
+      request.fields['formality'] = options!.formality!;
+    }
+    if (options?.glossaryId != null) {
+      request.fields['glossary_id'] = options!.glossaryId!;
+    }
+    _headers.forEach((k, v) {
+      request.headers[k] = v;
+    });
+    http.StreamedResponse response = await _httpClient.send(request);
+    String body = await response.stream.bytesToString();
+    await _checkStatusCode(response.statusCode, body,
+        reasonPhrase: response.reasonPhrase);
+    return DocumentHandle.fromJson(jsonDecode(body));
+  }
+
+  /// Retrieves the status of the document translation associated with the given
+  /// document handle.
+  ///
+  /// Takes document [handle] associated with document.
+  ///
+  /// Fulfills with a [DocumentStatus] giving the document translation status.
+  Future<DocumentStatus> getDocumentStatus(DocumentHandle handle) async {
+    Map<String, String> urlSearchParams = {'document_key': handle.documentKey};
+    Uri uri = _buildUri(
+        _serverUrl, '/v2/document/${handle.documentId}', null, urlSearchParams);
+    Response response = await _httpClient.get(uri, headers: _headers);
+    await _checkStatusCode(response.statusCode, response.body,
+        reasonPhrase: response.reasonPhrase, inDocumentDownload: true);
+    return DocumentStatus.fromJson(jsonDecode(response.body));
+  }
+
+  /// Downloads the translated document associated with the given document
+  /// handle to the specified output file path or stream.handle.
+  ///
+  /// Takes document [handle] associated with document.
+  ///
+  /// Takes [outputFile] to store file data.
+  Future<void> downloadDocument(DocumentHandle handle, File outputFile) async {
+    Uri uri = _buildUri(_serverUrl, '/v2/document/${handle.documentId}/result',
+        null, {'document_key': handle.documentKey});
+    Response response = await _httpClient.get(uri, headers: _headers);
+    await _checkStatusCode(response.statusCode, response.body,
+        reasonPhrase: response.reasonPhrase, inDocumentDownload: true);
+    await outputFile.writeAsBytes(response.bodyBytes);
+  }
+
+  /// Returns a promise that resolves when the given document translation
+  /// completes, or rejects if there was an error communicating with the DeepL
+  /// API or the document translation failed.
+  ///
+  /// Takes [handle] to the document translation.
+  ///
+  /// Fulfills with input [DocumentHandle] and [DocumentStatus] when the
+  /// document translation completes successfully, rejects if translation fails
+  /// or a communication error occurs.
+  Future<DocumentTranslationStatus> isDocumentTranslationComplete(
+      DocumentHandle handle) async {
+    DocumentStatus status = await getDocumentStatus(handle);
+    while (!status.done && status.ok) {
+      double secs = (status.secondsRemaining ?? 0) / 2.0 + 1.0;
+      secs = max(1.0, min(secs, 60.0));
+      await Future.delayed(Duration(seconds: secs.floor()));
+      print(
+          'Rechecking document translation status after sleeping for $secs seconds.');
+      status = await getDocumentStatus(handle);
+    }
+    if (!status.ok) {
+      throw DeepLError(message: status.errorMessage ?? 'unknown error');
+    }
+    return DocumentTranslationStatus(handle, status);
   }
 
   /// Returns true if the specified DeepL Authentication Key is associated with a free account,
@@ -226,22 +385,31 @@ class Translator {
   }
 
   /// Builds an URI to send a request to.
-  Uri _buildUri(String serverUrl, String path, List<String> texts,
+  Uri _buildUri(String serverUrl, String path, List<String>? texts,
       Map<String, String> urlSearchParams) {
-    String textsString = texts.map((text) => 'text=$text').join('&');
+    StringBuffer sb = StringBuffer(serverUrl);
+    sb.write(path);
+    sb.write('?');
+    if (texts != null) {
+      String textsString = texts.map((text) => 'text=$text').join('&');
+      sb.write(textsString);
+      sb.write('&');
+    }
     String paramsString =
         urlSearchParams.entries.map((e) => '${e.key}=${e.value}').join('&');
-    return Uri.parse('$serverUrl$path?$textsString&$paramsString');
+    sb.write(paramsString);
+    return Uri.parse(sb.toString());
   }
 
   /// Checks the HTTP status code, and in case of failure, throws an exception with diagnostic information.
   Future<void> _checkStatusCode(
-    Response response, {
-    usingGlossary = false,
+    int statusCode,
+    String content, {
+    String? reasonPhrase = 'Unknown',
+    bool usingGlossary = false,
+    bool inDocumentDownload = false,
   }) async {
-    int statusCode = response.statusCode;
     if (200 <= statusCode && statusCode < 400) return;
-    String content = response.body;
     String message = '';
     try {
       Map<String, dynamic> jsonObj = jsonDecode(content);
@@ -276,12 +444,16 @@ class Translator {
               'Too many requests, DeepL servers are currently experiencing high load$message',
         );
       case 503:
-        throw DeepLError(message: 'Service unavailable$message');
+        if (inDocumentDownload) {
+          throw DocumentNotReadyError(message: 'Document not ready$message');
+        } else {
+          throw DeepLError(message: 'Service unavailable$message');
+        }
       default:
         {
           throw DeepLError(
             message:
-                'Unexpected status code: $statusCode ${response.reasonPhrase}$message, content: $content',
+                'Unexpected status code: $statusCode $reasonPhrase$message, content: $content',
           );
         }
     }

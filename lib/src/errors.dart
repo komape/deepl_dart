@@ -31,3 +31,7 @@ class ConnectionError extends DeepLError {
 class GlossaryNotFoundError extends DeepLError {
   GlossaryNotFoundError({required String message}) : super(message: message);
 }
+
+class DocumentNotReadyError extends DeepLError {
+  DocumentNotReadyError({required String message}) : super(message: message);
+}
