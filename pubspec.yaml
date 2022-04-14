@@ -2,6 +2,8 @@ name: deepl_dart
 description: Dart library for the DeepL language translation API. 
 version: 0.1.0
 homepage: https://github.com/komape/deepl_dart
+repository: https://github.com/komape/deepl_dart
+issue_tracker: https://github.com/komape/deepl_dart/issues
 
 environment:
   sdk: ">=2.16.2 <3.0.0"

@@ -60,9 +60,11 @@ void main() {
       test('test empty text', () {
         expect(translator.translateTextSingular('', 'de'),
             throwsA(isA<AssertionError>()));
+        expect(translator.translateTextList([''], 'de'),
+            throwsA(isA<AssertionError>()));
         expect(translator.translateTextList([], 'de'),
             throwsA(isA<AssertionError>()));
-        expect(translator.translateTextList([''], 'de'),
+        expect(translator.translateTextList(List.filled(51, ''), 'de'),
             throwsA(isA<AssertionError>()));
       });
 

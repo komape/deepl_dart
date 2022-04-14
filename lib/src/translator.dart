@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:deepl_dart/src/errors.dart';
 import 'package:deepl_dart/src/model/text_result.dart';
@@ -107,6 +108,8 @@ class Translator {
     TranslateTextOptions? options,
   }) async {
     assert(texts.isNotEmpty, 'texts parameter must not be a non-empty list');
+    assert(texts.length <= 50,
+        'texts parameter can contain 50 elements at maximum');
     assert(texts.every((t) => t.isNotEmpty),
         'texts parameter must not be an array of non-empty strings');
     Map<String, String> urlSearchParams = _buildURLSearchParams(
