@@ -15,7 +15,7 @@ To use the package, you'll need an API authentication key. To get a key, [please
 ## Roadmap
 
 - [x] [Translating text](https://www.deepl.com/de/docs-api/translating-text/)
-- [ ] [Translating Document](https://www.deepl.com/de/docs-api/translating-documents/)
+- [x] [Translating Document](https://www.deepl.com/de/docs-api/translating-documents/)
 - [ ] [Managing Glossaries](https://www.deepl.com/de/docs-api/managing-glossaries/)
 - [ ] [Monitoring usage](https://www.deepl.com/de/docs-api/other-functions/monitoring-usage/)
 - [ ] [Listing supported languages](https://www.deepl.com/de/docs-api/other-functions/listing-supported-languages/)
