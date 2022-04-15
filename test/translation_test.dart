@@ -1,3 +1,5 @@
+@Timeout(Duration(seconds: 60))
+
 import 'dart:io';
 
 import 'package:deepl_dart/deepl_dart.dart';
