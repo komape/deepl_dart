@@ -43,6 +43,14 @@ void main() {
                 TextResult(text: sampleTextDe, detectedSourceLanguage: 'en'))));
       });
 
+      test('test regional language codes', () {
+        expect(
+            translator.translateTextSingular(sampleTextDe, 'en-us',
+                sourceLang: 'de'),
+            completion(equals(TextResult(
+                text: 'Hello world', detectedSourceLanguage: 'de'))));
+      });
+
       test('test deprecated language codes', () {
         expect(translator.translateTextSingular(sampleTextDe, 'en'),
             throwsA(isA<AssertionError>()));
@@ -140,6 +148,20 @@ void main() {
                 options: TranslateTextOptions(splitSentences: 'invalid')),
             throwsA(isA<DeepLError>()));
       });
+
+      test('translate text with glossary id but no source lang', () {
+        expect(
+            translator.translateTextSingular(sampleTextEn, 'de',
+                options: TranslateTextOptions(glossaryId: 'foo')),
+            throwsA(isA<DeepLError>()));
+      });
+
+      test('translate text with own server url', () {
+        Translator translator =
+            Translator(authKey: authKey, serverUrl: 'https://example.org');
+        expect(translator.translateTextSingular(sampleTextEn, 'de'),
+            throwsA(isA<DeepLError>()));
+      });
     });
 
     group('Translate Document', () {
@@ -166,6 +188,14 @@ void main() {
         expect(status.ok, equals(true));
         String translation = outputFile.readAsStringSync();
         expect(translation, equals('Hallo Welt'));
+      });
+
+      test('translate document with invalid file format', () {
+        inputFile = File('input.dart');
+        inputFile.writeAsStringSync('// hello world');
+        outputFile = File('ouput.dart');
+        expect(translator.translateDocument(inputFile, outputFile, 'de'),
+            throwsA(isA<DeepLError>()));
       });
 
       test('translate document with formality', () async {
@@ -211,6 +241,13 @@ void main() {
                 sourceLang: 'de'),
             throwsA(isA<DeepLError>()));
       });
+    });
+  });
+
+  group('Auth Key Check', () {
+    test('free auth key check', () {
+      expect(Translator.isFreeAccountAuthKey('0000:fx'), equals(true));
+      expect(Translator.isFreeAccountAuthKey('0000'), equals(false));
     });
   });
 }

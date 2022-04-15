@@ -1,5 +1,7 @@
 # deepl_dart
 
+[![Dart Analyze & Test](https://github.com/komape/deepl_dart/actions/workflows/dart_analyze_test.yml/badge.svg)](https://github.com/komape/deepl_dart/actions/workflows/dart_analyze_test.yml)
+
 **This package is maintained by volunteers but is not a supported DeepL product and not maintained by DeepL SE. Issues here are answered by maintainers and other community members on GitHub on a best-effort basis.**
 
 This package is heavily inspired by the [official Node.js Client Library for the DeepL API](https://github.com/DeepLcom/deepl-node):

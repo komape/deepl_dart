@@ -53,7 +53,7 @@ class Translator {
     authKey = authKey;
     if (serverUrl != null) {
       _serverUrl = serverUrl;
-    } else if (_isFreeAccountAuthKey(authKey)) {
+    } else if (isFreeAccountAuthKey(authKey)) {
       _serverUrl = 'https://api-free.deepl.com';
     } else {
       _serverUrl = 'https://api.deepl.com';
@@ -203,6 +203,12 @@ class Translator {
     DocumentTranslateOptions? options,
   }) async {
     Uri uri = _buildUri(_serverUrl, '/v2/document', null, {});
+    // build params for validity check
+    _buildURLSearchParams(
+        targetLang: targetLang,
+        sourceLang: sourceLang,
+        formality: options?.formality,
+        glossaryId: options?.glossaryId);
     http.MultipartRequest request = http.MultipartRequest('POST', uri)
       ..files.add(await http.MultipartFile.fromPath('file', inputFile.path,
           filename: options?.filename))
@@ -291,7 +297,7 @@ class Translator {
   ///
   /// Takes an [authKey] to check and returns [True] if the key is associated with
   /// a free account, otherwise [False].
-  bool _isFreeAccountAuthKey(String authKey) => authKey.endsWith(':fx');
+  static bool isFreeAccountAuthKey(String authKey) => authKey.endsWith(':fx');
 
   /// Validates and prepares URLSearchParams for arguments common to text and
   /// document translation.
