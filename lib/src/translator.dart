@@ -2,11 +2,16 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
-import 'package:deepl_dart/src/errors.dart';
+import 'package:deepl_dart/src/model/errors.dart';
 import 'package:deepl_dart/src/model/document_handle.dart';
 import 'package:deepl_dart/src/model/document_status.dart';
 import 'package:deepl_dart/src/model/document_translate_options.dart';
 import 'package:deepl_dart/src/model/document_translation_status.dart';
+import 'package:deepl_dart/src/model/glossary_entries.dart';
+import 'package:deepl_dart/src/model/glossary_info.dart';
+import 'package:deepl_dart/src/model/glossary_info_list_api_response.dart';
+import 'package:deepl_dart/src/model/glossary_language_pair.dart';
+import 'package:deepl_dart/src/model/glossary_language_pair_list_api_reponse.dart';
 import 'package:deepl_dart/src/model/text_result.dart';
 import 'package:deepl_dart/src/model/text_result_response.dart';
 import 'package:deepl_dart/src/model/translate_text_options.dart';
@@ -65,6 +70,15 @@ class Translator {
     };
     _httpClient = RetryClient(http.Client(), retries: maxRetries);
   }
+
+  /// Returns true if the specified DeepL Authentication Key is associated with a free account,
+  /// otherwise false.
+  ///
+  /// Takes an [authKey] to check and returns [True] if the key is associated with
+  /// a free account, otherwise [False].
+  static bool isFreeAccountAuthKey(String authKey) => authKey.endsWith(':fx');
+
+  // ============ TEXT TRANSLATION =============================================
 
   /// Translates specified text string into the target language.
   ///
@@ -126,7 +140,8 @@ class Translator {
     );
     _validateAndAppendTextOptions(urlSearchParams, options);
     Response translateRes = await _httpClient.post(
-        _buildUri(_serverUrl, '/v2/translate', texts, urlSearchParams),
+        _buildUri(_serverUrl, '/v2/translate',
+            texts: texts, urlSearchParams: urlSearchParams),
         headers: _headers);
     await _checkStatusCode(translateRes.statusCode, translateRes.body,
         reasonPhrase: translateRes.reasonPhrase);
@@ -134,6 +149,8 @@ class Translator {
         TextResultResponse.fromJson(jsonDecode(translateRes.body)).translations;
     return textResults;
   }
+
+  // ============ DOCUMENT TRANSLATION =========================================
 
   /// Uploads specified document to DeepL to translate into given target
   /// language, waits for translation to complete, then downloads translated
@@ -202,7 +219,7 @@ class Translator {
     String? sourceLang,
     DocumentTranslateOptions? options,
   }) async {
-    Uri uri = _buildUri(_serverUrl, '/v2/document', null, {});
+    Uri uri = _buildUri(_serverUrl, '/v2/document');
     // build params for validity check
     _buildURLSearchParams(
         targetLang: targetLang,
@@ -243,8 +260,8 @@ class Translator {
   /// Fulfills with a [DocumentStatus] giving the document translation status.
   Future<DocumentStatus> getDocumentStatus(DocumentHandle handle) async {
     Map<String, String> urlSearchParams = {'document_key': handle.documentKey};
-    Uri uri = _buildUri(
-        _serverUrl, '/v2/document/${handle.documentId}', null, urlSearchParams);
+    Uri uri = _buildUri(_serverUrl, '/v2/document/${handle.documentId}',
+        urlSearchParams: urlSearchParams);
     Response response = await _httpClient.get(uri, headers: _headers);
     await _checkStatusCode(response.statusCode, response.body,
         reasonPhrase: response.reasonPhrase, inDocumentDownload: true);
@@ -259,7 +276,7 @@ class Translator {
   /// Takes [outputFile] to store file data.
   Future<void> downloadDocument(DocumentHandle handle, File outputFile) async {
     Uri uri = _buildUri(_serverUrl, '/v2/document/${handle.documentId}/result',
-        null, {'document_key': handle.documentKey});
+        urlSearchParams: {'document_key': handle.documentKey});
     Response response = await _httpClient.get(uri, headers: _headers);
     await _checkStatusCode(response.statusCode, response.body,
         reasonPhrase: response.reasonPhrase, inDocumentDownload: true);
@@ -292,12 +309,127 @@ class Translator {
     return DocumentTranslationStatus(handle, status);
   }
 
-  /// Returns true if the specified DeepL Authentication Key is associated with a free account,
-  /// otherwise false.
+  // ============ GLOSSARY MANAGEMENT ==========================================
+
+  /// Queries language pairs supported for glossaries by DeepL API.
   ///
-  /// Takes an [authKey] to check and returns [True] if the key is associated with
-  /// a free account, otherwise [False].
-  static bool isFreeAccountAuthKey(String authKey) => authKey.endsWith(':fx');
+  /// Fulfills with an array of [GlossaryLanguagePair] objects containing
+  /// languages supported for glossaries.
+  Future<List<GlossaryLanguagePair>> getGlossaryLanguagePairs() async {
+    Uri uri = _buildUri(_serverUrl, '/v2/glossary-language-pairs');
+    Response response = await _httpClient.get(uri, headers: _headers);
+    await _checkStatusCode(response.statusCode, response.body,
+        reasonPhrase: response.reasonPhrase);
+    return GlossaryLanguagePairListApiResponse.fromJson(
+            jsonDecode(response.body))
+        .supportedLanguages;
+  }
+
+  /// Creates a new glossary on DeepL server with given name, languages, and
+  /// entries.
+  ///
+  /// Takes user-defined [name] to assign to the glossary.
+  ///
+  /// Takes [sourceLang] language code of the glossary source terms.
+  ///
+  /// Takes [targetLang] language code of the glossary target terms.
+  /// Takes [entries] as the source- & target-term pairs to add to the glossary.
+  ///
+  /// Fulfills with a [GlossaryInfo] containing details about the created
+  /// glossary.
+  Future<GlossaryInfo> createGlossary(
+      {required String name,
+      required String sourceLang,
+      required String targetLang,
+      required GlossaryEntries entries}) async {
+    assert(name.isNotEmpty, 'glossary name must be a non-empty string');
+    assert(entries.entries.isNotEmpty, 'glossary entries must not be empty');
+    sourceLang = _nonRegionalLanguageCode(sourceLang);
+    targetLang = _nonRegionalLanguageCode(targetLang);
+    String tsv = entries.toTsv();
+    Map<String, String> urlSearchParams = {
+      'name': name,
+      'source_lang': sourceLang,
+      'target_lang': targetLang,
+      'entries_format': 'tsv',
+      'entries': tsv
+    };
+    Uri uri = _buildUri(_serverUrl, '/v2/glossaries',
+        urlSearchParams: urlSearchParams);
+    Response response = await _httpClient.post(uri, headers: _headers);
+    await _checkStatusCode(response.statusCode, response.body,
+        reasonPhrase: response.reasonPhrase, usingGlossary: true);
+    return GlossaryInfo.fromJson(jsonDecode(response.body));
+  }
+
+  /// Gets information about an existing glossary.
+  ///
+  /// Takes [glossaryId] of the glossary.
+  ///
+  /// Fulfills with a [GlossaryInfo] containing details about the glossary.
+  Future<GlossaryInfo> getGlossary(String glossaryId) async {
+    assert(glossaryId.isNotEmpty, 'glossaryId must be a non-empty string');
+    Uri uri = _buildUri(_serverUrl, '/v2/glossaries/$glossaryId');
+    Response response = await _httpClient.get(uri, headers: _headers);
+    await _checkStatusCode(response.statusCode, response.body,
+        reasonPhrase: response.reasonPhrase, usingGlossary: true);
+    return GlossaryInfo.fromJson(jsonDecode(response.body));
+  }
+
+  /// Gets information about all existing glossaries.
+  ///
+  /// Fulfills with an array of [GlossaryInfo] containing details about all
+  /// existing glossaries.
+  Future<List<GlossaryInfo>> listGlossaries() async {
+    Uri uri = _buildUri(_serverUrl, '/v2/glossaries');
+    Response response = await _httpClient.get(uri, headers: _headers);
+    await _checkStatusCode(response.statusCode, response.body,
+        reasonPhrase: response.reasonPhrase, usingGlossary: true);
+    return GlossaryInfoListApiResponse.fromJson(jsonDecode(response.body))
+        .glossaries;
+  }
+
+  /// Retrieves the entries stored with the glossary with the given glossary ID
+  /// or GlossaryInfo.
+  ///
+  /// Takes [glossaryId] or [glossaryInfo] of glossary to retrieve entries of.
+  ///
+  /// Fulfills with [GlossaryEntries] holding the glossary entries.
+  Future<GlossaryEntries> getGlossaryEntries(
+      {String? glossaryId, GlossaryInfo? glossaryInfo}) async {
+    assert(
+        (glossaryId != null && glossaryId.isNotEmpty) || glossaryInfo != null,
+        'glossaryId and glossaryInfo are both null. only one is allowed');
+    assert(
+        (glossaryId != null && glossaryId.isNotEmpty) && glossaryInfo != null,
+        'glossaryId and glossaryInfo are both not null. only one is allowed');
+    glossaryId = glossaryId ?? glossaryInfo!.glossaryId;
+    Uri uri = _buildUri(_serverUrl, '/v2/glossaries/$glossaryId/entries');
+    Response response = await _httpClient.get(uri, headers: _headers);
+    await _checkStatusCode(response.statusCode, response.body,
+        reasonPhrase: response.reasonPhrase, usingGlossary: true);
+    return GlossaryEntries.constructFromTsv(response.body);
+  }
+
+  /// Deletes the glossary with the given glossary ID or GlossaryInfo.
+  /// @param glossary Glossary ID or GlossaryInfo of glossary to be deleted.
+  /// @return Fulfills with undefined when the glossary is deleted.
+  Future<void> deleteGlossary(
+      {String? glossaryId, GlossaryInfo? glossaryInfo}) async {
+    assert(
+        (glossaryId != null && glossaryId.isNotEmpty) || glossaryInfo != null,
+        'glossaryId and glossaryInfo are both null. only one is allowed');
+    assert(
+        (glossaryId != null && glossaryId.isNotEmpty) && glossaryInfo != null,
+        'glossaryId and glossaryInfo are both not null. only one is allowed');
+    glossaryId = glossaryId ?? glossaryInfo!.glossaryId;
+    Uri uri = _buildUri(_serverUrl, '/v2/glossaries/$glossaryId');
+    Response response = await _httpClient.delete(uri, headers: _headers);
+    await _checkStatusCode(response.statusCode, response.body,
+        reasonPhrase: response.reasonPhrase, usingGlossary: true);
+  }
+
+  // ============ PRIVATE ======================================================
 
   /// Validates and prepares URLSearchParams for arguments common to text and
   /// document translation.
@@ -348,6 +480,17 @@ class Translator {
         : '${parts[0].toLowerCase()}-${parts[1].toUpperCase()}';
   }
 
+  /// Removes the regional variant from a language, for example inputs 'en' and
+  /// 'en-US' both return 'en'.
+  ///
+  /// Takes [langCode] string containing language code to convert.
+  ///
+  /// Returns language code with regional variant removed.
+  String _nonRegionalLanguageCode(String langCode) {
+    assert(langCode.isNotEmpty, 'langCode must be a non-empty string');
+    return langCode.split('-')[0].toLowerCase();
+  }
+
   /// Validates and appends text options to HTTP request parameters.
   ///
   /// Takes [data] parameters for HTTP request.
@@ -391,8 +534,8 @@ class Translator {
   }
 
   /// Builds an URI to send a request to.
-  Uri _buildUri(String serverUrl, String path, List<String>? texts,
-      Map<String, String> urlSearchParams) {
+  Uri _buildUri(String serverUrl, String path,
+      {List<String>? texts, Map<String, String>? urlSearchParams}) {
     StringBuffer sb = StringBuffer(serverUrl);
     sb.write(path);
     sb.write('?');
@@ -401,9 +544,11 @@ class Translator {
       sb.write(textsString);
       sb.write('&');
     }
-    String paramsString =
-        urlSearchParams.entries.map((e) => '${e.key}=${e.value}').join('&');
-    sb.write(paramsString);
+    if (urlSearchParams != null) {
+      String paramsString =
+          urlSearchParams.entries.map((e) => '${e.key}=${e.value}').join('&');
+      sb.write(paramsString);
+    }
     return Uri.parse(sb.toString());
   }
 
