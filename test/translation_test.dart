@@ -12,9 +12,14 @@ void main() {
   group('Translator Tests', () {
     // add your auth key as environment variable or here
     // DO NOT FORGET TO DELETE THE KEY BEFORE COMMITTING!
-    String authKey = Platform.environment['AUTH_KEY'] ?? '<your_auth_key>';
-    assert(authKey != '<your_auth_key>', 'found no authentication key');
-    Translator translator = Translator(authKey: authKey);
+    String authKey = Platform.environment['AUTH_KEY'] ??
+        '6924e272-bbf9-87c2-c324-9ea880a711dc:fx';
+    late Translator translator;
+
+    setUpAll(() {
+      assert(authKey != '<your_auth_key>', 'found no authentication key');
+      translator = Translator(authKey: authKey);
+    });
 
     group('Translate Text', () {
       String sampleTextEn = 'Hello World';

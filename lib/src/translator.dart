@@ -47,10 +47,7 @@ class Translator {
     Map<String, String>? headers,
     int maxRetries = 5,
   }) {
-    if (authKey.isEmpty) {
-      throw DeepLError(message: 'authKey must be a non-empty string');
-    }
-    authKey = authKey;
+    assert(authKey.isNotEmpty, 'authKey must be a non-empty string');
     if (serverUrl != null) {
       _serverUrl = serverUrl;
     } else if (isFreeAccountAuthKey(authKey)) {
