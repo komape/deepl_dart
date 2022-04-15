@@ -9,7 +9,6 @@ environment:
   sdk: ">=2.16.2 <3.0.0"
 
 dependencies:
-  coverage: ^1.2.0
   http: ^0.13.4
   json_annotation: ^4.4.0
   json_serializable: ^6.1.5
