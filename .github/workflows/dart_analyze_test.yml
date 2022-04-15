@@ -41,6 +41,8 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    container:
+      image:  google/dart:latest
     needs: [analyze]
     env: 
       AUTH_KEY: ${{ secrets.AUTH_KEY }}
