@@ -59,5 +59,12 @@ jobs:
       # Your project will need to have tests in test/ and a dependency on
       # package:test for this step to succeed. Note that Flutter projects will
       # want to change this to 'flutter test'.
-      - name: Run tests
-        run: dart test
+      - name: Run tests with coverage
+        run: dart test --coverage=./coverage
+      - name: Convert coverage to ICOV
+        run: dart pub global run coverage:format_coverage --packages=.packages --report-on=lib --lcov -o ./coverage/lcov.info -i ./coverage   
+      - name: Upload coverage to Codecov  
+        uses: codecov/codecov-action@v1.0.2
+        with:
+          token: ${{secrets.CODECOV_TOKEN}}
+          file: coverage.lcov
