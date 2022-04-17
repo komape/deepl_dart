@@ -1,4 +1,4 @@
-# deepl_dart
+# [deepl_dart](https://pub.dev/packages/deepl_dart)
 
 [![Dart Analyze & Test](https://github.com/komape/deepl_dart/actions/workflows/dart_analyze_test.yml/badge.svg)](https://github.com/komape/deepl_dart/actions/workflows/dart_analyze_test.yml) [![codecov](https://codecov.io/gh/komape/deepl_dart/branch/master/graph/badge.svg?token=RF7B8BPD77)](https://codecov.io/gh/komape/deepl_dart)
 
