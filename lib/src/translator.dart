@@ -15,6 +15,7 @@ import 'package:deepl_dart/src/model/glossary_language_pair_list_api_reponse.dar
 import 'package:deepl_dart/src/model/text_result.dart';
 import 'package:deepl_dart/src/model/text_result_response.dart';
 import 'package:deepl_dart/src/model/translate_text_options.dart';
+import 'package:deepl_dart/src/model/usage.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
 import 'package:http/retry.dart';
@@ -74,6 +75,19 @@ class Translator {
   /// Takes an [authKey] to check and returns [True] if the key is associated with
   /// a free account, otherwise [False].
   static bool isFreeAccountAuthKey(String authKey) => authKey.endsWith(':fx');
+
+  // ============ USAGE ========================================================
+
+  /// Queries character and document usage during the current billing period.
+  ///
+  /// Fulfills with [Usage] object on success.
+  Future<Usage> getUsage() async {
+    Uri uri = _buildUri(_serverUrl, '/v2/usage');
+    Response response = await _httpClient.get(uri, headers: _headers);
+    await _checkStatusCode(response.statusCode, response.body,
+        reasonPhrase: response.reasonPhrase);
+    return Usage.fromJson(jsonDecode(response.body));
+  }
 
   // ============ TEXT TRANSLATION =============================================
 
