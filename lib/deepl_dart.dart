@@ -12,3 +12,4 @@ export 'src/model/glossary_language_pair.dart';
 export 'src/model/language.dart';
 export 'src/model/text_result.dart';
 export 'src/model/translate_text_options.dart';
+export 'src/model/usage.dart';

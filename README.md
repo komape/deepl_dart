@@ -19,7 +19,7 @@ To use the package, you'll need an API authentication key. To get a key, [please
 - [x] [Translating text](https://www.deepl.com/de/docs-api/translating-text/)
 - [x] [Translating Document](https://www.deepl.com/de/docs-api/translating-documents/)
 - [x] [Managing Glossaries](https://www.deepl.com/de/docs-api/managing-glossaries/)
-- [ ] [Monitoring usage](https://www.deepl.com/de/docs-api/other-functions/monitoring-usage/)
+- [x] [Monitoring usage](https://www.deepl.com/de/docs-api/other-functions/monitoring-usage/)
 - [ ] [Listing supported languages](https://www.deepl.com/de/docs-api/other-functions/listing-supported-languages/)
 
 ## Installation
