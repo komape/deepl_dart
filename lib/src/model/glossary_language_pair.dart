@@ -11,4 +11,8 @@ class GlossaryLanguagePair {
 
   factory GlossaryLanguagePair.fromJson(Map<String, dynamic> json) =>
       _$GlossaryLanguagePairFromJson(json);
+
+  @override
+  String toString() =>
+      'GlossaryLanguagePair[sourceLang: $sourceLang, targetLang: $targetLang]';
 }

@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:deepl_dart/src/model/errors.dart';
 
 /// Stores the entries of a glossary.
@@ -71,6 +72,18 @@ class GlossaryEntries {
         return '${e.key}\t${e.value}';
       }).join('\n');
 
+  @override
+  operator ==(Object other) {
+    if (other is! GlossaryEntries) return false;
+    return MapEquality().equals(_entries, other._entries);
+  }
+
+  @override
+  int get hashCode => _entries.hashCode;
+
+  @override
+  String toString() => 'GlossaryEntries[entries: ${_entries.toString()}]';
+
   /// Checks if the given glossary term contains any disallowed characters.
   ///
   /// Takes glossary [term] term to check for validity.
@@ -84,7 +97,7 @@ class GlossaryEntries {
       if ((0 <= codeUnit && codeUnit <= 31) || // C0 control units
               (127 <= codeUnit && codeUnit <= 159) || // C1 control units
               codeUnit == 0x2028 ||
-              codeUnit == 0x2029 // unicde newlines
+              codeUnit == 0x2029 // unicode newlines
           ) {
         throw DeepLError(
             message:

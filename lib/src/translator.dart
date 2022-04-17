@@ -52,10 +52,7 @@ class Translator {
     Map<String, String>? headers,
     int maxRetries = 5,
   }) {
-    if (authKey.isEmpty) {
-      throw DeepLError(message: 'authKey must be a non-empty string');
-    }
-    authKey = authKey;
+    assert(authKey.isNotEmpty, 'authKey must be a non-empty string');
     if (serverUrl != null) {
       _serverUrl = serverUrl;
     } else if (isFreeAccountAuthKey(authKey)) {
@@ -347,16 +344,18 @@ class Translator {
     sourceLang = _nonRegionalLanguageCode(sourceLang);
     targetLang = _nonRegionalLanguageCode(targetLang);
     String tsv = entries.toTsv();
-    Map<String, String> urlSearchParams = {
+    Map<String, String> data = {
       'name': name,
       'source_lang': sourceLang,
       'target_lang': targetLang,
       'entries_format': 'tsv',
       'entries': tsv
     };
-    Uri uri = _buildUri(_serverUrl, '/v2/glossaries',
-        urlSearchParams: urlSearchParams);
-    Response response = await _httpClient.post(uri, headers: _headers);
+    Uri uri = _buildUri(_serverUrl, '/v2/glossaries');
+    Response response = await _httpClient.post(uri,
+        headers: _headers,
+        body: data,
+        encoding: Encoding.getByName('application/x-www-form-urlencoded'));
     await _checkStatusCode(response.statusCode, response.body,
         reasonPhrase: response.reasonPhrase, usingGlossary: true);
     return GlossaryInfo.fromJson(jsonDecode(response.body));
@@ -398,12 +397,11 @@ class Translator {
   Future<GlossaryEntries> getGlossaryEntries(
       {String? glossaryId, GlossaryInfo? glossaryInfo}) async {
     assert(
-        (glossaryId != null && glossaryId.isNotEmpty) || glossaryInfo != null,
-        'glossaryId and glossaryInfo are both null. only one is allowed');
-    assert(
-        (glossaryId != null && glossaryId.isNotEmpty) && glossaryInfo != null,
-        'glossaryId and glossaryInfo are both not null. only one is allowed');
+        (glossaryId != null && glossaryInfo == null) ||
+            (glossaryId == null && glossaryInfo != null),
+        'glossaryId and glossaryInfo are both not null or both null. only one is allowed');
     glossaryId = glossaryId ?? glossaryInfo!.glossaryId;
+    assert(glossaryId.isNotEmpty, 'glossaryId must be a non-empty string');
     Uri uri = _buildUri(_serverUrl, '/v2/glossaries/$glossaryId/entries');
     Response response = await _httpClient.get(uri, headers: _headers);
     await _checkStatusCode(response.statusCode, response.body,
@@ -417,12 +415,11 @@ class Translator {
   Future<void> deleteGlossary(
       {String? glossaryId, GlossaryInfo? glossaryInfo}) async {
     assert(
-        (glossaryId != null && glossaryId.isNotEmpty) || glossaryInfo != null,
-        'glossaryId and glossaryInfo are both null. only one is allowed');
-    assert(
-        (glossaryId != null && glossaryId.isNotEmpty) && glossaryInfo != null,
-        'glossaryId and glossaryInfo are both not null. only one is allowed');
+        (glossaryId != null && glossaryInfo == null) ||
+            (glossaryId == null && glossaryInfo != null),
+        'glossaryId and glossaryInfo are both not null or both null. only one is allowed');
     glossaryId = glossaryId ?? glossaryInfo!.glossaryId;
+    assert(glossaryId.isNotEmpty, 'glossaryId must be a non-empty string');
     Uri uri = _buildUri(_serverUrl, '/v2/glossaries/$glossaryId');
     Response response = await _httpClient.delete(uri, headers: _headers);
     await _checkStatusCode(response.statusCode, response.body,

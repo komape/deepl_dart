@@ -24,4 +24,30 @@ class GlossaryInfo {
 
   factory GlossaryInfo.fromJson(Map<String, dynamic> json) =>
       _$GlossaryInfoFromJson(json);
+
+  @override
+  operator ==(Object other) {
+    if (other is! GlossaryInfo) return false;
+    return glossaryId == other.glossaryId &&
+        name == other.name &&
+        ready == other.ready &&
+        sourceLang == other.sourceLang &&
+        targetLang == other.targetLang &&
+        creationTime == other.creationTime &&
+        entryCount == other.entryCount;
+  }
+
+  @override
+  String toString() =>
+      'GlossaryInfo[glossaryId: $glossaryId, name: $name, ready: $ready, sourceLang: $sourceLang, targetLang: $targetLang, creationTime: $creationTime, entryCount: $entryCount]';
+
+  @override
+  int get hashCode =>
+      glossaryId.hashCode +
+      name.hashCode +
+      ready.hashCode +
+      sourceLang.hashCode +
+      targetLang.hashCode +
+      creationTime.hashCode +
+      entryCount.hashCode;
 }
