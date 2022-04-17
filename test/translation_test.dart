@@ -3,18 +3,18 @@
 import 'dart:io';
 
 import 'package:deepl_dart/deepl_dart.dart';
-import 'package:deepl_dart/src/errors.dart';
-import 'package:deepl_dart/src/model/document_status.dart';
-import 'package:deepl_dart/src/model/document_translate_options.dart';
+import 'package:deepl_dart/src/model/errors.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('Translator Tests', () {
-    // add your auth key as environment variable or here
-    // DO NOT FORGET TO DELETE THE KEY BEFORE COMMITTING!
-    String authKey = Platform.environment['AUTH_KEY'] ?? '<your_auth_key>';
-    assert(authKey != '<your_auth_key>', 'found no authentication key');
-    Translator translator = Translator(authKey: authKey);
+    String? authKey = Platform.environment['DEEPL_AUTH_KEY'];
+    late Translator translator;
+
+    setUpAll(() {
+      assert(authKey != null, 'found no authentication key');
+      translator = Translator(authKey: authKey!);
+    });
 
     group('Translate Text', () {
       String sampleTextEn = 'Hello World';
@@ -160,7 +160,7 @@ void main() {
 
       test('translate text with own server url', () {
         Translator translator =
-            Translator(authKey: authKey, serverUrl: 'https://example.org');
+            Translator(authKey: authKey!, serverUrl: 'https://example.org');
         expect(translator.translateTextSingular(sampleTextEn, 'de'),
             throwsA(isA<DeepLError>()));
       });
@@ -247,6 +247,10 @@ void main() {
   });
 
   group('Auth Key Check', () {
+    test('create translator with empty auth key', () {
+      expect(() => Translator(authKey: ''), throwsA(isA<AssertionError>()));
+    });
+
     test('free auth key check', () {
       expect(Translator.isFreeAccountAuthKey('0000:fx'), equals(true));
       expect(Translator.isFreeAccountAuthKey('0000'), equals(false));

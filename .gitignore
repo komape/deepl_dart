@@ -11,3 +11,6 @@ pubspec.lock
 
 # ignore coverage
 coverage/
+
+# vs code stuff
+.vscode/

@@ -43,7 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [analyze]
     env: 
-      AUTH_KEY: ${{ secrets.AUTH_KEY }}
+      DEEPL_AUTH_KEY: ${{ secrets.DEEPL_AUTH_KEY }}
     steps:
       - uses: actions/checkout@v3
 
