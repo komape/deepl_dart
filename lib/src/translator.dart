@@ -12,6 +12,7 @@ import 'package:deepl_dart/src/model/glossary_info.dart';
 import 'package:deepl_dart/src/model/glossary_info_list_api_response.dart';
 import 'package:deepl_dart/src/model/glossary_language_pair.dart';
 import 'package:deepl_dart/src/model/glossary_language_pair_list_api_reponse.dart';
+import 'package:deepl_dart/src/model/language.dart';
 import 'package:deepl_dart/src/model/text_result.dart';
 import 'package:deepl_dart/src/model/text_result_response.dart';
 import 'package:deepl_dart/src/model/translate_text_options.dart';
@@ -74,6 +75,30 @@ class Translator {
   /// Takes an [authKey] to check and returns [True] if the key is associated with
   /// a free account, otherwise [False].
   static bool isFreeAccountAuthKey(String authKey) => authKey.endsWith(':fx');
+
+  // ============ LANGUAGES ====================================================
+
+  /// Queries source languages supported by DeepL API.
+  ///
+  /// Fulfills with array of [Language] objects containing available source
+  /// languages.
+  Future<List<Language>> getSourceLanguages() async => _getLanguages('source');
+
+  /// Queries target languages supported by DeepL API.
+  ///
+  /// Fulfills with array of [Language] objects containing available target
+  /// languages.
+  Future<List<Language>> getTargetLanguages() async => _getLanguages('target');
+
+  Future<List<Language>> _getLanguages(String type) async {
+    Uri uri =
+        _buildUri(_serverUrl, '/v2/languages', urlSearchParams: {'type': type});
+    Response response = await _httpClient.get(uri, headers: _headers);
+    await _checkStatusCode(response.statusCode, response.body,
+        reasonPhrase: response.reasonPhrase);
+    List<dynamic> decodedJson = jsonDecode(response.body);
+    return decodedJson.map((json) => Language.fromJson(json)).toList();
+  }
 
   // ============ TEXT TRANSLATION =============================================
 
