@@ -12,9 +12,11 @@ import 'package:deepl_dart/src/model/glossary_info.dart';
 import 'package:deepl_dart/src/model/glossary_info_list_api_response.dart';
 import 'package:deepl_dart/src/model/glossary_language_pair.dart';
 import 'package:deepl_dart/src/model/glossary_language_pair_list_api_reponse.dart';
+import 'package:deepl_dart/src/model/language.dart';
 import 'package:deepl_dart/src/model/text_result.dart';
 import 'package:deepl_dart/src/model/text_result_response.dart';
 import 'package:deepl_dart/src/model/translate_text_options.dart';
+import 'package:deepl_dart/src/model/usage.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
 import 'package:http/retry.dart';
@@ -62,7 +64,7 @@ class Translator {
     }
     _headers = {
       'Authorization': 'DeepL-Auth-Key $authKey',
-      'User-Agent': 'deepl_dart/0.3.0',
+      'User-Agent': 'deepl_dart/1.0.0',
       ...(headers ?? {}),
     };
     _httpClient = RetryClient(http.Client(), retries: maxRetries);
@@ -74,6 +76,43 @@ class Translator {
   /// Takes an [authKey] to check and returns [True] if the key is associated with
   /// a free account, otherwise [False].
   static bool isFreeAccountAuthKey(String authKey) => authKey.endsWith(':fx');
+
+  // ============ USAGE ========================================================
+
+  /// Queries character and document usage during the current billing period.
+  ///
+  /// Fulfills with [Usage] object on success.
+  Future<Usage> getUsage() async {
+    Uri uri = _buildUri(_serverUrl, '/v2/usage');
+    Response response = await _httpClient.get(uri, headers: _headers);
+    await _checkStatusCode(response.statusCode, response.body,
+        reasonPhrase: response.reasonPhrase);
+    return Usage.fromJson(jsonDecode(response.body));
+  }
+
+  // ============ LANGUAGES ====================================================
+
+  /// Queries source languages supported by DeepL API.
+  ///
+  /// Fulfills with array of [Language] objects containing available source
+  /// languages.
+  Future<List<Language>> getSourceLanguages() async => _getLanguages('source');
+
+  /// Queries target languages supported by DeepL API.
+  ///
+  /// Fulfills with array of [Language] objects containing available target
+  /// languages.
+  Future<List<Language>> getTargetLanguages() async => _getLanguages('target');
+
+  Future<List<Language>> _getLanguages(String type) async {
+    Uri uri =
+        _buildUri(_serverUrl, '/v2/languages', urlSearchParams: {'type': type});
+    Response response = await _httpClient.get(uri, headers: _headers);
+    await _checkStatusCode(response.statusCode, response.body,
+        reasonPhrase: response.reasonPhrase);
+    List<dynamic> decodedJson = jsonDecode(response.body);
+    return decodedJson.map((json) => Language.fromJson(json)).toList();
+  }
 
   // ============ TEXT TRANSLATION =============================================
 

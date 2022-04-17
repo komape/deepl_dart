@@ -9,5 +9,7 @@ export 'src/model/document_translation_status.dart';
 export 'src/model/glossary_entries.dart';
 export 'src/model/glossary_info.dart';
 export 'src/model/glossary_language_pair.dart';
+export 'src/model/language.dart';
 export 'src/model/text_result.dart';
 export 'src/model/translate_text_options.dart';
+export 'src/model/usage.dart';
