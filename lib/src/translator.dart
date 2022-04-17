@@ -64,7 +64,7 @@ class Translator {
     }
     _headers = {
       'Authorization': 'DeepL-Auth-Key $authKey',
-      'User-Agent': 'deepl_dart/0.3.0',
+      'User-Agent': 'deepl_dart/1.0.0',
       ...(headers ?? {}),
     };
     _httpClient = RetryClient(http.Client(), retries: maxRetries);

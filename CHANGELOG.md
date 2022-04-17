@@ -12,3 +12,9 @@
 ## 0.3.0
 
 - #2 Manage Glossaries
+
+## 1.0.0
+
+- #3 Monitor Usage
+- #4 List Supported Languages
+- First production-ready version
