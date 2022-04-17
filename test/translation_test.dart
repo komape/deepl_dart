@@ -4,8 +4,6 @@ import 'dart:io';
 
 import 'package:deepl_dart/deepl_dart.dart';
 import 'package:deepl_dart/src/model/errors.dart';
-import 'package:deepl_dart/src/model/document_status.dart';
-import 'package:deepl_dart/src/model/document_translate_options.dart';
 import 'package:test/test.dart';
 
 void main() {
