@@ -88,6 +88,7 @@ class Translator {
     await _checkStatusCode(response.statusCode, response.body,
         reasonPhrase: response.reasonPhrase);
     return Usage.fromJson(jsonDecode(response.body));
+  }
 
   // ============ LANGUAGES ====================================================
 
