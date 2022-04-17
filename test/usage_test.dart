@@ -16,6 +16,7 @@ void main() {
     test('get usage', () async {
       Usage usage = await translator.getUsage();
       expect(usage.characterCount <= usage.characterLimit, isTrue);
+      expect(usage.anyLimitReached(), isFalse);
     });
   });
 }
