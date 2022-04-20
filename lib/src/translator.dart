@@ -64,7 +64,7 @@ class Translator {
     }
     _headers = {
       'Authorization': 'DeepL-Auth-Key $authKey',
-      'User-Agent': 'deepl_dart/1.0.0',
+      'User-Agent': 'deepl_dart/1.0.1',
       ...(headers ?? {}),
     };
     _httpClient = RetryClient(http.Client(), retries: maxRetries);
@@ -210,7 +210,6 @@ class Translator {
   /// billed for the document.
   ///
   /// Throws [Error] if no file exists at the input file path.
-  ///
   ///
   /// Throws [DocumentTranslationError] if any error occurs during document
   /// upload, translation or download. The [documentHandle] property of the
