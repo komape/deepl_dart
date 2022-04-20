@@ -18,3 +18,7 @@
 - #3 Monitor Usage
 - #4 List Supported Languages
 - First production-ready version
+
+## 1.0.1
+
+- More examples
