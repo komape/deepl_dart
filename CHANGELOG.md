@@ -22,3 +22,7 @@
 ## 1.0.1
 
 - More examples
+
+## 1.0.2
+
+- Fix #14: Support UTF-8
