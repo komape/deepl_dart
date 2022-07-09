@@ -608,7 +608,7 @@ class Translator {
       }
     } catch (error) {
       // JSON parsing errors are ignored, and we fall back to the raw content
-      message = ', ' + content;
+      message = ', $content';
     }
     switch (statusCode) {
       case 403:
