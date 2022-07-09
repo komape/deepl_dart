@@ -181,8 +181,9 @@ class Translator {
         headers: _headers);
     await _checkStatusCode(translateRes.statusCode, translateRes.body,
         reasonPhrase: translateRes.reasonPhrase);
-    List<TextResult> textResults =
-        TextResultResponse.fromJson(jsonDecode(translateRes.body)).translations;
+    List<TextResult> textResults = TextResultResponse.fromJson(
+            jsonDecode(utf8.decode(translateRes.bodyBytes)))
+        .translations;
     return textResults;
   }
 
@@ -607,7 +608,7 @@ class Translator {
       }
     } catch (error) {
       // JSON parsing errors are ignored, and we fall back to the raw content
-      message = ', ' + content;
+      message = ', $content';
     }
     switch (statusCode) {
       case 403:
