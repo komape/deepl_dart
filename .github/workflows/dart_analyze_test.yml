@@ -42,7 +42,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     needs: [analyze]
-    env: 
+    env:
       DEEPL_AUTH_KEY: ${{ secrets.DEEPL_AUTH_KEY }}
     steps:
       - uses: actions/checkout@v3
@@ -64,8 +64,8 @@ jobs:
       - name: Activate coverage
         run: dart pub global activate coverage
       - name: Convert coverage to ICOV
-        run: dart pub global run coverage:format_coverage --packages=.packages --report-on=lib --lcov -o ./coverage/lcov.info -i ./coverage   
-      - name: Upload coverage to Codecov  
+        run: dart pub global run coverage:format_coverage --packages=.dart_tool/package_config.json --report-on=lib --lcov -o ./coverage/lcov.info -i ./coverage
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
           token: ${{secrets.CODECOV_TOKEN}}

@@ -28,6 +28,13 @@ void main() {
                 TextResult(text: sampleTextDe, detectedSourceLanguage: 'en'))));
       });
 
+      test('translate text with utf-8 check', () {
+        expect(
+            translator.translateTextSingular('The force be with you.', 'pl'),
+            completion(equals(TextResult(
+                text: 'Siła będzie z tobą.', detectedSourceLanguage: 'en'))));
+      });
+
       test('translate list of text', () {
         expect(
             translator.translateTextList([sampleTextEn, sampleTextPt], 'de'),
