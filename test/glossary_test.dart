@@ -6,6 +6,8 @@ import 'package:deepl_dart/deepl_dart.dart';
 import 'package:deepl_dart/src/model/errors.dart';
 import 'package:test/test.dart';
 
+import 'translation_test.dart';
+
 void main() {
   group('Glossary Tests', () {
     String? authKey = Platform.environment['DEEPL_AUTH_KEY'];
@@ -68,6 +70,24 @@ void main() {
               targetLang: targetLang,
               entries: entries),
           throwsA(isA<AssertionError>()));
+    });
+
+    test('create glossary with csv file', () async {
+      File csvFile = File('csvFile.csv');
+      csvFile.writeAsStringSync('"Hello","Hi",en,de');
+      GlossaryInfo info = await translator.createGlossaryWithCsvFile(
+          name: name,
+          sourceLang: sourceLang,
+          targetLang: targetLang,
+          csvFile: csvFile);
+      expect(info.glossaryId, isNotEmpty);
+      expect(info.name, equals(name));
+      expect(info.sourceLang, equals(sourceLang));
+      expect(info.targetLang, equals(targetLang));
+      expect(info.creationTime, isNotEmpty);
+      expect(info.ready, isTrue);
+      expect(info.entryCount, equals(1));
+      deleteIfExists(csvFile);
     });
 
     test('get glossary', () async {

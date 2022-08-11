@@ -26,3 +26,7 @@
 ## 1.0.2
 
 - Fix #14: Support UTF-8
+
+## 1.1.0
+
+- #18: Added Option to Create Glossary with CSV File

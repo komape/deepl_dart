@@ -187,6 +187,19 @@ GlossaryInfo glossaryInfo = await translator.createGlossary(
 );
 ```
 
+You can also upload a glossary downloaded from the DeepL website using `createGlossaryFromCsv()`. Instead of supplying the entries as a GlossaryEntries object, provide the CSV file as a File containing the CSV file content:
+
+```dart
+GlossaryInfo csvGlossaryInfo = await translator.createGlossaryWithCsvFile(
+  name: 'my glossary',
+  sourceLang: 'en',
+  targetLang: 'de',
+  csvFile: File('<csv_file_path>'),
+);
+```
+
+The [API documentation](https://www.deepl.com/docs-api/managing-glossaries/supported-glossary-formats/) explains the expected CSV format in detail.
+
 Not all languages are supported. You can check the possible language pairs.
 
 ```dart

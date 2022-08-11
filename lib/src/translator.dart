@@ -369,6 +369,7 @@ class Translator {
   /// Takes [sourceLang] language code of the glossary source terms.
   ///
   /// Takes [targetLang] language code of the glossary target terms.
+  ///
   /// Takes [entries] as the source- & target-term pairs to add to the glossary.
   ///
   /// Fulfills with a [GlossaryInfo] containing details about the created
@@ -380,15 +381,60 @@ class Translator {
       required GlossaryEntries entries}) async {
     assert(name.isNotEmpty, 'glossary name must be a non-empty string');
     assert(entries.entries.isNotEmpty, 'glossary entries must not be empty');
+    String tsvContent = entries.toTsv();
+    return _createGlossaryInternally(
+        name: name,
+        sourceLang: sourceLang,
+        targetLang: targetLang,
+        entriesFormat: 'tsv',
+        entries: tsvContent);
+  }
+
+  /// Creates a new glossary on DeepL server with given name, languages, and CSV
+  /// data.
+  ///
+  /// Takes user-defined [name] to assign to the glossary.
+  ///
+  /// Takes [sourceLang] language code of the glossary source terms.
+  ///
+  /// Takes [targetLang] language code of the glossary target terms.
+  ///
+  /// Takes [csvFile] containing the source- & target-term pairs as CSV to add
+  /// to the glossary.
+  ///
+  /// Fulfills with a [GlossaryInfo] containing details about the created
+  /// glossary.
+  Future<GlossaryInfo> createGlossaryWithCsvFile(
+      {required String name,
+      required String sourceLang,
+      required String targetLang,
+      required File csvFile}) async {
+    assert(name.isNotEmpty, 'glossary name must be a non-empty string');
+    assert(await csvFile.exists(), 'csv file must exist');
+    String csvContent = await csvFile.readAsString();
+    assert(csvContent.isNotEmpty, 'csv file must be non empty');
+    return _createGlossaryInternally(
+        name: name,
+        sourceLang: sourceLang,
+        targetLang: targetLang,
+        entriesFormat: 'csv',
+        entries: csvContent);
+  }
+
+  Future<GlossaryInfo> _createGlossaryInternally(
+      {required String name,
+      required String sourceLang,
+      required String targetLang,
+      required String entriesFormat,
+      required String entries}) async {
     sourceLang = _nonRegionalLanguageCode(sourceLang);
     targetLang = _nonRegionalLanguageCode(targetLang);
-    String tsv = entries.toTsv();
     Map<String, String> data = {
       'name': name,
       'source_lang': sourceLang,
       'target_lang': targetLang,
-      'entries_format': 'tsv',
-      'entries': tsv
+      'entries_format': entriesFormat,
+      'entries': entries
     };
     Uri uri = _buildUri(_serverUrl, '/v2/glossaries');
     Response response = await _httpClient.post(uri,
