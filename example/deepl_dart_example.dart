@@ -54,6 +54,15 @@ void main() async {
   );
   print(glossaryInfo);
 
+  // Create glossary with CSV file
+  GlossaryInfo csvGlossaryInfo = await translator.createGlossaryWithCsvFile(
+    name: 'my glossary',
+    sourceLang: 'en',
+    targetLang: 'de',
+    csvFile: File('<csv_file_path>'),
+  );
+  print(csvGlossaryInfo);
+
   // List glossaries
   List<GlossaryInfo> glossaryList = await translator.listGlossaries();
   print(glossaryList);
