@@ -30,3 +30,7 @@
 ## 1.1.0
 
 - #18: Added Option to Create Glossary with CSV File
+
+## 1.2.0
+
+- #21 Replace IO dependency to support Web
