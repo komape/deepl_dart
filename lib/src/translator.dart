@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math';
 
 import 'package:deepl_dart/src/model/errors.dart';
@@ -20,6 +19,7 @@ import 'package:deepl_dart/src/model/usage.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
 import 'package:http/retry.dart';
+import 'package:universal_io/io.dart';
 
 /// Wrapper for the DeepL API for language translation. Create an instance of
 /// Translator to use the DeepL API.
