@@ -34,3 +34,8 @@
 ## 1.2.0
 
 - #21 Replace IO dependency to support Web
+
+## 1.3.0
+
+- #22 Upgrade supported languages
+- Update dependencies
