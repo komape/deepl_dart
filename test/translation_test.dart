@@ -32,7 +32,8 @@ void main() {
         expect(
             translator.translateTextSingular('The force be with you.', 'pl'),
             completion(equals(TextResult(
-                text: 'Siła będzie z tobą.', detectedSourceLanguage: 'en'))));
+                text: 'Siła niech będzie z tobą.',
+                detectedSourceLanguage: 'en'))));
       });
 
       test('translate list of text', () {

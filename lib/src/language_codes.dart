@@ -13,10 +13,13 @@ final Set<String> commonLanguageCode = {
   'fi',
   'fr',
   'hu',
+  'id',
   'it',
   'ja',
+  'ko',
   'lt',
   'lv',
+  'nb',
   'nl',
   'pl',
   'ro',
@@ -24,6 +27,8 @@ final Set<String> commonLanguageCode = {
   'sk',
   'sl',
   'sv',
+  'tr',
+  'uk',
   'zh',
 };
 
@@ -52,10 +57,12 @@ final Set<String> languageCode =
 ///
 /// Note: although the language code type definitions are case-sensitive, this package and the DeepL
 /// API accept case-insensitive language codes.
-final Set<String> sourceGlossaryLanguageCode = Set.of({'de', 'en', 'es', 'fr'});
+final Set<String> sourceGlossaryLanguageCode =
+    Set.of({'de', 'en', 'es', 'fr', 'ja'});
 
 /// Language codes that may be used as a target language for glossaries.
 ///
 /// Note: although the language code type definitions are case-sensitive, this
 /// package and the DeepL API accept case-insensitive language codes.
-final Set<String> targetGlossaryLanguageCode = Set.of({'de', 'en', 'es', 'fr'});
+final Set<String> targetGlossaryLanguageCode =
+    Set.of({'de', 'en', 'es', 'fr', 'ja'});
