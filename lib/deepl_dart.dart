@@ -6,6 +6,7 @@ export 'src/model/document_handle.dart';
 export 'src/model/document_status.dart';
 export 'src/model/document_translate_options.dart';
 export 'src/model/document_translation_status.dart';
+export 'src/model/errors.dart';
 export 'src/model/glossary_entries.dart';
 export 'src/model/glossary_info.dart';
 export 'src/model/glossary_language_pair.dart';
