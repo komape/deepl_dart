@@ -39,3 +39,7 @@
 
 - #22 Upgrade supported languages
 - Update dependencies
+
+## 1.3.1
+
+- Export errors
