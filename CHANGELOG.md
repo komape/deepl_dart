@@ -43,3 +43,7 @@
 ## 1.3.1
 
 - Export errors
+
+## 1.4.0
+
+- Use JSON over URL params for text translation

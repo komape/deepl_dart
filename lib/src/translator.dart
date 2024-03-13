@@ -14,6 +14,7 @@ import 'package:deepl_dart/src/model/glossary_language_pair_list_api_reponse.dar
 import 'package:deepl_dart/src/model/language.dart';
 import 'package:deepl_dart/src/model/text_result.dart';
 import 'package:deepl_dart/src/model/text_result_response.dart';
+import 'package:deepl_dart/src/model/text_translation_request.dart';
 import 'package:deepl_dart/src/model/translate_text_options.dart';
 import 'package:deepl_dart/src/model/usage.dart';
 import 'package:http/http.dart' as http;
@@ -64,7 +65,7 @@ class Translator {
     }
     _headers = {
       'Authorization': 'DeepL-Auth-Key $authKey',
-      'User-Agent': 'deepl_dart/1.0.1',
+      'User-Agent': 'deepl_dart/1.4.0',
       ...(headers ?? {}),
     };
     _httpClient = RetryClient(http.Client(), retries: maxRetries);
@@ -168,17 +169,16 @@ class Translator {
         'texts parameter can contain 50 elements at maximum');
     assert(texts.every((t) => t.isNotEmpty),
         'texts parameter must not be an array of non-empty strings');
-    Map<String, String> urlSearchParams = _buildURLSearchParams(
-      sourceLang: sourceLang,
-      targetLang: targetLang,
-      formality: options?.formality,
-      glossaryId: options?.glossaryId,
-    );
-    _validateAndAppendTextOptions(urlSearchParams, options);
+    final TextTranslationRequest ttr = TextTranslationRequest.fromOptions(
+        text: texts,
+        sourceLang: sourceLang,
+        targetLang: targetLang,
+        options: options);
     Response translateRes = await _httpClient.post(
-        _buildUri(_serverUrl, '/v2/translate',
-            texts: texts, urlSearchParams: urlSearchParams),
-        headers: _headers);
+        _buildUri(_serverUrl, '/v2/translate'),
+        headers: {..._headers}..addAll({'Content-Type': 'application/json'}),
+        body: ttr.toJson(),
+        encoding: Encoding.getByName('utf8'));
     await _checkStatusCode(translateRes.statusCode, translateRes.body,
         reasonPhrase: translateRes.reasonPhrase);
     List<TextResult> textResults = TextResultResponse.fromJson(
@@ -573,59 +573,12 @@ class Translator {
     return langCode.split('-')[0].toLowerCase();
   }
 
-  /// Validates and appends text options to HTTP request parameters.
-  ///
-  /// Takes [data] parameters for HTTP request.
-  ///
-  /// Takes [options] for translate text request.
-  ///
-  /// Note the formality and glossaryId options are handled separately, because
-  /// these options overlap with the translateDocument function.
-  void _validateAndAppendTextOptions(
-      Map<String, String> data, TranslateTextOptions? options) {
-    if (options == null) return;
-    if (options.splitSentences != null) {
-      options.splitSentences = options.splitSentences!.toLowerCase();
-      if (options.splitSentences == 'on' ||
-          options.splitSentences == 'default') {
-        data['split_sentences'] = '1';
-      } else if (options.splitSentences == 'off') {
-        data['split_sentences'] = '0';
-      } else {
-        data['split_sentences'] = options.splitSentences!;
-      }
-    }
-    if (options.preserveFormatting ?? false) {
-      data['preserve_formatting'] = '1';
-    }
-    if (options.tagHandling != null) {
-      data['tag_handling'] = options.tagHandling!;
-    }
-    if (options.outlineDetection != null && !options.outlineDetection!) {
-      data['outline_detection'] = '0';
-    }
-    if (options.nonSplittingTags != null) {
-      data['non_splitting_tags'] = options.nonSplittingTags!;
-    }
-    if (options.splittingTags != null) {
-      data['splitting_tags'] = options.splittingTags!;
-    }
-    if (options.ignoreTags != null) {
-      data['ignore_tags'] = options.ignoreTags!;
-    }
-  }
-
   /// Builds an URI to send a request to.
   Uri _buildUri(String serverUrl, String path,
-      {List<String>? texts, Map<String, String>? urlSearchParams}) {
+      {Map<String, String>? urlSearchParams}) {
     StringBuffer sb = StringBuffer(serverUrl);
     sb.write(path);
     sb.write('?');
-    if (texts != null) {
-      String textsString = texts.map((text) => 'text=$text').join('&');
-      sb.write(textsString);
-      sb.write('&');
-    }
     if (urlSearchParams != null) {
       String paramsString =
           urlSearchParams.entries.map((e) => '${e.key}=${e.value}').join('&');
