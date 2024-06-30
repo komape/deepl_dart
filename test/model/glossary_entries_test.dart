@@ -1,5 +1,4 @@
 import 'package:deepl_dart/deepl_dart.dart';
-import 'package:deepl_dart/src/model/errors.dart';
 import 'package:test/test.dart';
 
 void main() {
