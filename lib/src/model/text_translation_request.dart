@@ -21,6 +21,7 @@ class TextTranslationRequest {
   final String? splittingTags;
   final String? nonSplittingTags;
   final String? ignoreTags;
+  final String? context;
 
   TextTranslationRequest({
     required this.text,
@@ -35,6 +36,7 @@ class TextTranslationRequest {
     this.splittingTags,
     this.nonSplittingTags,
     this.ignoreTags,
+    this.context,
   });
 
   TextTranslationRequest.fromOptions({
@@ -50,7 +52,8 @@ class TextTranslationRequest {
         outlineDetection = options?.outlineDetection,
         splittingTags = options?.splittingTags,
         nonSplittingTags = options?.nonSplittingTags,
-        ignoreTags = options?.ignoreTags;
+        ignoreTags = options?.ignoreTags,
+        context = options?.context;
 
   String toJson() => jsonEncode(_$TextTranslationRequestToJson(this));
 

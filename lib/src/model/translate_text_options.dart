@@ -34,6 +34,8 @@ class TranslateTextOptions {
   /// List of XML tags containing content that should not be translated.
   String? ignoreTags;
 
+  String? context;
+
   TranslateTextOptions(
       {this.splitSentences,
       this.preserveFormatting,
@@ -43,5 +45,6 @@ class TranslateTextOptions {
       this.outlineDetection,
       this.splittingTags,
       this.nonSplittingTags,
-      this.ignoreTags});
+      this.ignoreTags,
+      this.context});
 }
