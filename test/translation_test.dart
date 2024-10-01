@@ -252,6 +252,82 @@ void main() {
             throwsA(isA<DeepLError>()));
       });
     });
+
+    group('Translate Text with Context', () {
+      test('translate text with context - basic', () async {
+        String text = 'The mouse is fast.';
+        String context = 'This text is about computer hardware.';
+
+        var result = await translator.translateTextSingular(text, 'de',
+            options: TranslateTextOptions(context: context));
+
+        expect(result.text.toLowerCase(), contains('maus'));
+        expect(result.detectedSourceLanguage, equals('EN'));
+      });
+
+      test('translate text with context - ambiguous word', () async {
+        String text = 'The bank is closed.';
+        String financialContext = 'This text is about financial institutions.';
+        String riverContext =
+            'This text is about a river and its surroundings.';
+
+        var financialResult = await translator.translateTextSingular(text, 'de',
+            options: TranslateTextOptions(context: financialContext));
+
+        var riverResult = await translator.translateTextSingular(text, 'de',
+            options: TranslateTextOptions(context: riverContext));
+
+        expect(financialResult.text.toLowerCase(), contains('bank'));
+        expect(riverResult.text.toLowerCase(), contains('ufer'));
+        expect(financialResult.detectedSourceLanguage, equals('EN'));
+        expect(riverResult.detectedSourceLanguage, equals('EN'));
+      });
+
+      test('translate text with context - gender', () async {
+        String text = 'The doctor said they would be available tomorrow.';
+        String maleContext = 'The doctor is a man named John.';
+        String femaleContext = 'The doctor is a woman named Sarah.';
+
+        var maleResult = await translator.translateTextSingular(text, 'de',
+            options: TranslateTextOptions(context: maleContext));
+
+        var femaleResult = await translator.translateTextSingular(text, 'de',
+            options: TranslateTextOptions(context: femaleContext));
+
+        expect(maleResult.text.toLowerCase(), contains('er'));
+        expect(femaleResult.text.toLowerCase(), contains('sie'));
+        expect(maleResult.detectedSourceLanguage, equals('EN'));
+        expect(femaleResult.detectedSourceLanguage, equals('EN'));
+      });
+
+      test('translate text with context - long context', () async {
+        String text = 'The application crashed.';
+        String context = '''
+          This text is about software development.
+          The application is a mobile app written in Flutter.
+          It has been crashing frequently due to memory leaks.
+          The development team is working on fixing these issues.
+        ''';
+
+        var result = await translator.translateTextSingular(text, 'de',
+            options: TranslateTextOptions(context: context));
+
+        expect(result.text.toLowerCase(),
+            anyOf(contains('anwendung'), contains('app')));
+        expect(result.detectedSourceLanguage, equals('EN'));
+      });
+
+      test('translate text with empty context', () async {
+        String text = 'Hello, world!';
+        String context = '';
+
+        var result = await translator.translateTextSingular(text, 'de',
+            options: TranslateTextOptions(context: context));
+
+        expect(result.text, equals('Hallo, Welt!'));
+        expect(result.detectedSourceLanguage, equals('EN'));
+      });
+    });
   });
 
   group('Auth Key Check', () {

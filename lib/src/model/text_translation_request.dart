@@ -12,11 +12,14 @@ class TextTranslationRequest {
   final List<String> text;
   final String? sourceLang;
   final String targetLang;
+  @JsonKey(toJson: _splitSentencesToJson)
   final String? splitSentences;
+  @JsonKey(toJson: _boolToJson)
   final bool? preserveFormatting;
   final String? formality;
   final String? glossaryId;
   final String? tagHandling;
+  @JsonKey(toJson: _boolToJson)
   final bool? outlineDetection;
   final String? splittingTags;
   final String? nonSplittingTags;

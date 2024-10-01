@@ -38,12 +38,15 @@ Map<String, dynamic> _$TextTranslationRequestToJson(
 
   writeNotNull('source_lang', instance.sourceLang);
   val['target_lang'] = instance.targetLang;
-  writeNotNull('split_sentences', instance.splitSentences);
-  writeNotNull('preserve_formatting', instance.preserveFormatting);
+  writeNotNull('split_sentences',
+      TextTranslationRequest._splitSentencesToJson(instance.splitSentences));
+  writeNotNull('preserve_formatting',
+      TextTranslationRequest._boolToJson(instance.preserveFormatting));
   writeNotNull('formality', instance.formality);
   writeNotNull('glossary_id', instance.glossaryId);
   writeNotNull('tag_handling', instance.tagHandling);
-  writeNotNull('outline_detection', instance.outlineDetection);
+  writeNotNull('outline_detection',
+      TextTranslationRequest._boolToJson(instance.outlineDetection));
   writeNotNull('splitting_tags', instance.splittingTags);
   writeNotNull('non_splitting_tags', instance.nonSplittingTags);
   writeNotNull('ignore_tags', instance.ignoreTags);
