@@ -47,3 +47,7 @@
 ## 1.4.0
 
 - Use JSON over URL params for text translation
+
+## 1.5.0
+
+- #25 Add translation context
