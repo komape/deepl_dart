@@ -25,6 +25,23 @@ void main() async {
       await translator.translateTextSingular('Hello World', 'de');
   print(result);
 
+  // Translate single text with options
+  TextResult resultWithOptions =
+      await translator.translateTextSingular('Hello World', 'de',
+          options: TranslateTextOptions(
+            splitSentences: "0",
+            preserveFormatting: true,
+            formality: "more",
+            glossaryId: "123",
+            tagHandling: "xml",
+            outlineDetection: true,
+            nonSplittingTags: "tag1,tag2",
+            splittingTags: "tag3,tag4",
+            ignoreTags: "tag5,tag6",
+            context: "This is my context.",
+          ));
+  print(resultWithOptions);
+
   // Translate multiple texts
   List<TextResult> results =
       await translator.translateTextList(['Hello World', 'Hola Mundo'], 'de');
