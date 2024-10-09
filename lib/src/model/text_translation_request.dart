@@ -7,6 +7,7 @@ part 'text_translation_request.g.dart';
 
 @JsonSerializable(
   includeIfNull: false,
+  createFactory: false,
 )
 class TextTranslationRequest {
   final List<String> text;

@@ -10,7 +10,7 @@ DocumentStatus _$DocumentStatusFromJson(Map<String, dynamic> json) =>
     DocumentStatus(
       status: $enumDecode(_$DocumentStatusCodeEnumMap, json['status']),
       secondsRemaining: (json['seconds_remaining'] as num?)?.toDouble(),
-      billedCharacters: (json['billed_characters'] as num?)?.toInt(),
+      billedCharacters: json['billed_characters'] as int?,
       errorMessage: json['error_message'] as String?,
     );
 

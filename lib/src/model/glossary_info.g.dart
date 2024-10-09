@@ -13,5 +13,5 @@ GlossaryInfo _$GlossaryInfoFromJson(Map<String, dynamic> json) => GlossaryInfo(
       sourceLang: json['source_lang'] as String,
       targetLang: json['target_lang'] as String,
       creationTime: json['creation_time'] as String,
-      entryCount: (json['entry_count'] as num).toInt(),
+      entryCount: json['entry_count'] as int,
     );
