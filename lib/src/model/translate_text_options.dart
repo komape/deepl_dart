@@ -34,14 +34,21 @@ class TranslateTextOptions {
   /// List of XML tags containing content that should not be translated.
   String? ignoreTags;
 
-  TranslateTextOptions(
-      {this.splitSentences,
-      this.preserveFormatting,
-      this.formality,
-      this.glossaryId,
-      this.tagHandling,
-      this.outlineDetection,
-      this.splittingTags,
-      this.nonSplittingTags,
-      this.ignoreTags});
+  /// Provides additional context to improve translation accuracy.
+  /// This text is not translated itself, but helps the engine
+  /// understand the surrounding meaning.
+  String? context;
+
+  TranslateTextOptions({
+    this.splitSentences,
+    this.preserveFormatting,
+    this.formality,
+    this.glossaryId,
+    this.tagHandling,
+    this.outlineDetection,
+    this.splittingTags,
+    this.nonSplittingTags,
+    this.ignoreTags,
+    this.context,
+  });
 }

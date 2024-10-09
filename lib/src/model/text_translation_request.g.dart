@@ -21,6 +21,7 @@ TextTranslationRequest _$TextTranslationRequestFromJson(
       splittingTags: json['splitting_tags'] as String?,
       nonSplittingTags: json['non_splitting_tags'] as String?,
       ignoreTags: json['ignore_tags'] as String?,
+      context: json['context'] as String?,
     );
 
 Map<String, dynamic> _$TextTranslationRequestToJson(
@@ -49,5 +50,6 @@ Map<String, dynamic> _$TextTranslationRequestToJson(
   writeNotNull('splitting_tags', instance.splittingTags);
   writeNotNull('non_splitting_tags', instance.nonSplittingTags);
   writeNotNull('ignore_tags', instance.ignoreTags);
+  writeNotNull('context', instance.context);
   return val;
 }

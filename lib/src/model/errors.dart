@@ -9,29 +9,28 @@ class DeepLError extends Error {
 }
 
 class AuthorizationError extends DeepLError {
-  AuthorizationError({required String message}) : super(message: message);
+  AuthorizationError({required super.message});
 }
 
 class QuotaExceededError extends DeepLError {
-  QuotaExceededError({required String message}) : super(message: message);
+  QuotaExceededError({required super.message});
 }
 
 class TooManyRequestsError extends DeepLError {
-  TooManyRequestsError({required String message}) : super(message: message);
+  TooManyRequestsError({required super.message});
 }
 
 class ConnectionError extends DeepLError {
   bool shouldRetry;
 
   ConnectionError(
-      {required String message, this.shouldRetry = false, Error? error})
-      : super(message: message, error: error);
+      {required super.message, this.shouldRetry = false, super.error});
 }
 
 class GlossaryNotFoundError extends DeepLError {
-  GlossaryNotFoundError({required String message}) : super(message: message);
+  GlossaryNotFoundError({required super.message});
 }
 
 class DocumentNotReadyError extends DeepLError {
-  DocumentNotReadyError({required String message}) : super(message: message);
+  DocumentNotReadyError({required super.message});
 }
