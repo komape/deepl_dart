@@ -1,5 +1,6 @@
 library deepl_dart;
 
+export 'src/deepl.dart';
 export 'src/translator.dart';
 
 export 'src/model/document_handle.dart';

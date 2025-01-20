@@ -1,37 +1,35 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 
-import 'package:deepl_dart/src/model/errors.dart';
-import 'package:deepl_dart/src/model/document_handle.dart';
-import 'package:deepl_dart/src/model/document_status.dart';
-import 'package:deepl_dart/src/model/document_translate_options.dart';
-import 'package:deepl_dart/src/model/document_translation_status.dart';
-import 'package:deepl_dart/src/model/glossary_entries.dart';
-import 'package:deepl_dart/src/model/glossary_info.dart';
+import 'package:deepl_dart/deepl_dart.dart';
 import 'package:deepl_dart/src/model/glossary_info_list_api_response.dart';
-import 'package:deepl_dart/src/model/glossary_language_pair.dart';
 import 'package:deepl_dart/src/model/glossary_language_pair_list_api_reponse.dart';
-import 'package:deepl_dart/src/model/language.dart';
-import 'package:deepl_dart/src/model/text_result.dart';
 import 'package:deepl_dart/src/model/text_result_response.dart';
 import 'package:deepl_dart/src/model/text_translation_request.dart';
-import 'package:deepl_dart/src/model/translate_text_options.dart';
-import 'package:deepl_dart/src/model/usage.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
 import 'package:http/retry.dart';
-import 'package:universal_io/io.dart';
 
-/// Wrapper for the DeepL API for language translation. Create an instance of
-/// Translator to use the DeepL API.
-@Deprecated("Use the DeepL class instead. See changelog for detailed guidance. This class will be removed in a future release.")
-class Translator {
-  late String _serverUrl;
-  late Map<String, String> _headers;
-  late http.Client _httpClient;
+class DeepL {
+  late _DeepLConfig _config;
 
-  /// Construct a Translator object wrapping the DeepL API using your
-  /// authentication key.
+  late Translate translate;
+  late Write write;
+  late Glossaries glossaries;
+  late Languages languages;
+
+  /// Construct a DeepL object wrapping the DeepL API using your authentication
+  /// key. Use submodules for different API functionalities. Currently supported
+  /// submodules are [translate], [write], [glossaries], and [languages].
+  /// 
+  /// [translate] submodule provides text and document translation.
+  /// 
+  /// [write] submodule provides rephrasing functionality.
+  /// 
+  /// [glossaries] submodule provides glossary creation, inspection, and deletion.
+  /// 
+  /// [languages] submodule provides language information.
   ///
   /// This does not connect to the API, and returns immediately.
   ///
@@ -42,15 +40,54 @@ class Translator {
   /// based on the user account type (free or paid).
   ///
   /// Takes HTTP [headers] attached to every HTTP request. By default, no extra
-  /// headers are used. Note that during Translator initialization headers for
+  /// headers are used. Note that during DeepL initialization headers for
   /// Authorization and User-Agent are added, unless they are overridden in this
   /// option.
   ///
   ///
-  /// Takes [maxRetries] for the maximum number of failed attempts that
-  /// Translator will retry, per request. By default, 5 retries are made.
+  /// Takes [maxRetries] for the maximum number of failed attempts that DeepL
+  /// will retry, per request. By default, 5 retries are made.
+  ///
   /// Note: only errors due to transient conditions are retried.
-  Translator({
+  DeepL({
+    required String authKey,
+    String? serverUrl,
+    Map<String, String>? headers,
+    int maxRetries = 5,
+  }) {
+    assert(authKey.isNotEmpty, 'authKey must be a non-empty string');
+    _config = _DeepLConfig(
+      authKey: authKey,
+      serverUrl: serverUrl,
+      headers: headers,
+      maxRetries: maxRetries,
+    );
+    // initialize submodules
+    translate = Translate._fromConfig(_config);
+    write = Write._fromConfig(_config);
+    glossaries = Glossaries._fromConfig(_config);
+    languages = Languages._fromConfig(_config);
+  }
+
+  /// Queries character and document usage during the current billing period.
+  ///
+  /// Fulfills with [Usage] object on success.
+  Future<Usage> getUsage() async {
+    Uri uri = _buildUri(_config._serverUrl, '/v2/usage');
+    Response response =
+        await _config._httpClient.get(uri, headers: _config._headers);
+    await _checkStatusCode(response.statusCode, response.body,
+        reasonPhrase: response.reasonPhrase);
+    return Usage.fromJson(jsonDecode(response.body));
+  }
+}
+
+class _DeepLConfig {
+  late String _serverUrl;
+  late Map<String, String> _headers;
+  late http.Client _httpClient;
+
+  _DeepLConfig({
     required String authKey,
     String? serverUrl,
     Map<String, String>? headers,
@@ -66,57 +103,44 @@ class Translator {
     }
     _headers = {
       'Authorization': 'DeepL-Auth-Key $authKey',
-      'User-Agent': 'deepl_dart/1.4.0',
+      'User-Agent': 'deepl_dart/2.0.0',
       ...(headers ?? {}),
     };
     _httpClient = RetryClient(http.Client(), retries: maxRetries);
   }
+}
 
-  /// Returns true if the specified DeepL Authentication Key is associated with a free account,
-  /// otherwise false.
-  ///
-  /// Takes an [authKey] to check and returns [True] if the key is associated with
-  /// a free account, otherwise [False].
-  static bool isFreeAccountAuthKey(String authKey) => authKey.endsWith(':fx');
+// Wrapper for the DeepL API for language translation.
+class Translate {
+  final _DeepLConfig _config;
 
-  // ============ USAGE ========================================================
-
-  /// Queries character and document usage during the current billing period.
-  ///
-  /// Fulfills with [Usage] object on success.
-  Future<Usage> getUsage() async {
-    Uri uri = _buildUri(_serverUrl, '/v2/usage');
-    Response response = await _httpClient.get(uri, headers: _headers);
-    await _checkStatusCode(response.statusCode, response.body,
-        reasonPhrase: response.reasonPhrase);
-    return Usage.fromJson(jsonDecode(response.body));
-  }
-
-  // ============ LANGUAGES ====================================================
-
-  /// Queries source languages supported by DeepL API.
-  ///
-  /// Fulfills with array of [Language] objects containing available source
-  /// languages.
-  Future<List<Language>> getSourceLanguages() async => _getLanguages('source');
-
-  /// Queries target languages supported by DeepL API.
-  ///
-  /// Fulfills with array of [Language] objects containing available target
-  /// languages.
-  Future<List<Language>> getTargetLanguages() async => _getLanguages('target');
-
-  Future<List<Language>> _getLanguages(String type) async {
-    Uri uri =
-        _buildUri(_serverUrl, '/v2/languages', urlSearchParams: {'type': type});
-    Response response = await _httpClient.get(uri, headers: _headers);
-    await _checkStatusCode(response.statusCode, response.body,
-        reasonPhrase: response.reasonPhrase);
-    List<dynamic> decodedJson = jsonDecode(response.body);
-    return decodedJson.map((json) => Language.fromJson(json)).toList();
-  }
+  Translate._fromConfig(this._config);
 
   // ============ TEXT TRANSLATION =============================================
+
+  /// Translates specified text string into the target language.
+  ///
+  /// Takes [text] to be translated.
+  ///
+  /// Takes [sourceLang] as language of the text to be translated. If omitted,
+  /// the API will attempt to detect the language of the text and translate it.
+  ///
+  /// Takes [targetLang] as language into which the text should be translated.
+  ///
+  /// [options] optional [TranslateTextOptions] object containing additional
+  /// options controlling translation.
+  ///
+  /// Fulfills with a [TextResult] object; use the `TextResult.text` property to
+  /// access the translated text.
+  Future<TextResult> translateTextSingular(
+    String text,
+    String targetLang, {
+    String? sourceLang,
+    TranslateTextOptions? options,
+  }) async {
+    return translateText(text, targetLang,
+        sourceLang: sourceLang, options: options);
+  }
 
   /// Translates specified text string into the target language.
   ///
@@ -132,7 +156,7 @@ class Translator {
   ///
   /// Fulfills with a [TextResult] object; use the `TextResult.text` property to
   /// access the translated text.
-  Future<TextResult> translateTextSingular(
+  Future<TextResult> translateText(
     String text,
     String targetLang, {
     String? sourceLang,
@@ -175,9 +199,10 @@ class Translator {
         sourceLang: sourceLang,
         targetLang: targetLang,
         options: options);
-    Response translateRes = await _httpClient.post(
-        _buildUri(_serverUrl, '/v2/translate'),
-        headers: {..._headers}..addAll({'Content-Type': 'application/json'}),
+    Response translateRes = await _config._httpClient.post(
+        _buildUri(_config._serverUrl, '/v2/translate'),
+        headers: {..._config._headers}
+          ..addAll({'Content-Type': 'application/json'}),
         body: ttr.toJson(),
         encoding: Encoding.getByName('utf8'));
     await _checkStatusCode(translateRes.statusCode, translateRes.body,
@@ -256,7 +281,7 @@ class Translator {
     String? sourceLang,
     DocumentTranslateOptions? options,
   }) async {
-    Uri uri = _buildUri(_serverUrl, '/v2/document');
+    Uri uri = _buildUri(_config._serverUrl, '/v2/document');
     // build params for validity check
     _buildURLSearchParams(
         targetLang: targetLang,
@@ -279,10 +304,10 @@ class Translator {
     if (options?.glossaryId != null) {
       request.fields['glossary_id'] = options!.glossaryId!;
     }
-    _headers.forEach((k, v) {
+    _config._headers.forEach((k, v) {
       request.headers[k] = v;
     });
-    http.StreamedResponse response = await _httpClient.send(request);
+    http.StreamedResponse response = await _config._httpClient.send(request);
     String body = await response.stream.bytesToString();
     await _checkStatusCode(response.statusCode, body,
         reasonPhrase: response.reasonPhrase);
@@ -297,9 +322,10 @@ class Translator {
   /// Fulfills with a [DocumentStatus] giving the document translation status.
   Future<DocumentStatus> getDocumentStatus(DocumentHandle handle) async {
     Map<String, String> urlSearchParams = {'document_key': handle.documentKey};
-    Uri uri = _buildUri(_serverUrl, '/v2/document/${handle.documentId}',
+    Uri uri = _buildUri(_config._serverUrl, '/v2/document/${handle.documentId}',
         urlSearchParams: urlSearchParams);
-    Response response = await _httpClient.get(uri, headers: _headers);
+    Response response =
+        await _config._httpClient.get(uri, headers: _config._headers);
     await _checkStatusCode(response.statusCode, response.body,
         reasonPhrase: response.reasonPhrase, inDocumentDownload: true);
     return DocumentStatus.fromJson(jsonDecode(response.body));
@@ -312,9 +338,11 @@ class Translator {
   ///
   /// Takes [outputFile] to store file data.
   Future<void> downloadDocument(DocumentHandle handle, File outputFile) async {
-    Uri uri = _buildUri(_serverUrl, '/v2/document/${handle.documentId}/result',
+    Uri uri = _buildUri(
+        _config._serverUrl, '/v2/document/${handle.documentId}/result',
         urlSearchParams: {'document_key': handle.documentKey});
-    Response response = await _httpClient.get(uri, headers: _headers);
+    Response response =
+        await _config._httpClient.get(uri, headers: _config._headers);
     await _checkStatusCode(response.statusCode, response.body,
         reasonPhrase: response.reasonPhrase, inDocumentDownload: true);
     await outputFile.writeAsBytes(response.bodyBytes);
@@ -345,16 +373,38 @@ class Translator {
     }
     return DocumentTranslationStatus(handle, status);
   }
+}
 
-  // ============ GLOSSARY MANAGEMENT ==========================================
+class Write {
+  final _DeepLConfig _config;
+
+  Write._fromConfig(this._config);
+
+  String rephrase() {
+    throw UnimplementedError();
+  }
+}
+
+/// [Glossaries] functions allow you to create, inspect, and delete glossaries.
+/// Glossaries created with [Glossaries] can be used in translate requests by
+/// specifying the [glossaryId] parameter in the [TranslateTextOptions] object.
+/// 
+/// Note: Glossaries created via the DeepL API are distinct from glossaries
+/// created via the DeepL website and DeepL apps. This means API glossaries
+/// cannot be used on the website and vice versa.
+class Glossaries {
+  final _DeepLConfig _config;
+
+  Glossaries._fromConfig(this._config);
 
   /// Queries language pairs supported for glossaries by DeepL API.
   ///
   /// Fulfills with an array of [GlossaryLanguagePair] objects containing
   /// languages supported for glossaries.
-  Future<List<GlossaryLanguagePair>> getGlossaryLanguagePairs() async {
-    Uri uri = _buildUri(_serverUrl, '/v2/glossary-language-pairs');
-    Response response = await _httpClient.get(uri, headers: _headers);
+  Future<List<GlossaryLanguagePair>> getLanguagePairs() async {
+    Uri uri = _buildUri(_config._serverUrl, '/v2/glossary-language-pairs');
+    Response response =
+        await _config._httpClient.get(uri, headers: _config._headers);
     await _checkStatusCode(response.statusCode, response.body,
         reasonPhrase: response.reasonPhrase);
     return GlossaryLanguagePairListApiResponse.fromJson(
@@ -375,7 +425,7 @@ class Translator {
   ///
   /// Fulfills with a [GlossaryInfo] containing details about the created
   /// glossary.
-  Future<GlossaryInfo> createGlossary(
+  Future<GlossaryInfo> create(
       {required String name,
       required String sourceLang,
       required String targetLang,
@@ -383,7 +433,7 @@ class Translator {
     assert(name.isNotEmpty, 'glossary name must be a non-empty string');
     assert(entries.entries.isNotEmpty, 'glossary entries must not be empty');
     String tsvContent = entries.toTsv();
-    return _createGlossaryInternally(
+    return _create(
         name: name,
         sourceLang: sourceLang,
         targetLang: targetLang,
@@ -405,7 +455,7 @@ class Translator {
   ///
   /// Fulfills with a [GlossaryInfo] containing details about the created
   /// glossary.
-  Future<GlossaryInfo> createGlossaryWithCsvFile(
+  Future<GlossaryInfo> createWithCsvFile(
       {required String name,
       required String sourceLang,
       required String targetLang,
@@ -414,7 +464,7 @@ class Translator {
     assert(await csvFile.exists(), 'csv file must exist');
     String csvContent = await csvFile.readAsString();
     assert(csvContent.isNotEmpty, 'csv file must be non empty');
-    return _createGlossaryInternally(
+    return _create(
         name: name,
         sourceLang: sourceLang,
         targetLang: targetLang,
@@ -422,7 +472,7 @@ class Translator {
         entries: csvContent);
   }
 
-  Future<GlossaryInfo> _createGlossaryInternally(
+  Future<GlossaryInfo> _create(
       {required String name,
       required String sourceLang,
       required String targetLang,
@@ -437,9 +487,9 @@ class Translator {
       'entries_format': entriesFormat,
       'entries': entries
     };
-    Uri uri = _buildUri(_serverUrl, '/v2/glossaries');
-    Response response = await _httpClient.post(uri,
-        headers: _headers,
+    Uri uri = _buildUri(_config._serverUrl, '/v2/glossaries');
+    Response response = await _config._httpClient.post(uri,
+        headers: _config._headers,
         body: data,
         encoding: Encoding.getByName('application/x-www-form-urlencoded'));
     await _checkStatusCode(response.statusCode, response.body,
@@ -452,10 +502,11 @@ class Translator {
   /// Takes [glossaryId] of the glossary.
   ///
   /// Fulfills with a [GlossaryInfo] containing details about the glossary.
-  Future<GlossaryInfo> getGlossary(String glossaryId) async {
+  Future<GlossaryInfo> get(String glossaryId) async {
     assert(glossaryId.isNotEmpty, 'glossaryId must be a non-empty string');
-    Uri uri = _buildUri(_serverUrl, '/v2/glossaries/$glossaryId');
-    Response response = await _httpClient.get(uri, headers: _headers);
+    Uri uri = _buildUri(_config._serverUrl, '/v2/glossaries/$glossaryId');
+    Response response =
+        await _config._httpClient.get(uri, headers: _config._headers);
     await _checkStatusCode(response.statusCode, response.body,
         reasonPhrase: response.reasonPhrase, usingGlossary: true);
     return GlossaryInfo.fromJson(jsonDecode(response.body));
@@ -465,9 +516,10 @@ class Translator {
   ///
   /// Fulfills with an array of [GlossaryInfo] containing details about all
   /// existing glossaries.
-  Future<List<GlossaryInfo>> listGlossaries() async {
-    Uri uri = _buildUri(_serverUrl, '/v2/glossaries');
-    Response response = await _httpClient.get(uri, headers: _headers);
+  Future<List<GlossaryInfo>> list() async {
+    Uri uri = _buildUri(_config._serverUrl, '/v2/glossaries');
+    Response response =
+        await _config._httpClient.get(uri, headers: _config._headers);
     await _checkStatusCode(response.statusCode, response.body,
         reasonPhrase: response.reasonPhrase, usingGlossary: true);
     return GlossaryInfoListApiResponse.fromJson(jsonDecode(response.body))
@@ -480,7 +532,7 @@ class Translator {
   /// Takes [glossaryId] or [glossaryInfo] of glossary to retrieve entries of.
   ///
   /// Fulfills with [GlossaryEntries] holding the glossary entries.
-  Future<GlossaryEntries> getGlossaryEntries(
+  Future<GlossaryEntries> getEntries(
       {String? glossaryId, GlossaryInfo? glossaryInfo}) async {
     assert(
         (glossaryId != null && glossaryInfo == null) ||
@@ -488,8 +540,10 @@ class Translator {
         'glossaryId and glossaryInfo are both not null or both null. only one is allowed');
     glossaryId = glossaryId ?? glossaryInfo!.glossaryId;
     assert(glossaryId.isNotEmpty, 'glossaryId must be a non-empty string');
-    Uri uri = _buildUri(_serverUrl, '/v2/glossaries/$glossaryId/entries');
-    Response response = await _httpClient.get(uri, headers: _headers);
+    Uri uri =
+        _buildUri(_config._serverUrl, '/v2/glossaries/$glossaryId/entries');
+    Response response =
+        await _config._httpClient.get(uri, headers: _config._headers);
     await _checkStatusCode(response.statusCode, response.body,
         reasonPhrase: response.reasonPhrase, usingGlossary: true);
     return GlossaryEntries.constructFromTsv(response.body);
@@ -498,151 +552,185 @@ class Translator {
   /// Deletes the glossary with the given glossary ID or GlossaryInfo.
   /// @param glossary Glossary ID or GlossaryInfo of glossary to be deleted.
   /// @return Fulfills with undefined when the glossary is deleted.
-  Future<void> deleteGlossary(
-      {String? glossaryId, GlossaryInfo? glossaryInfo}) async {
+  Future<void> delete({String? glossaryId, GlossaryInfo? glossaryInfo}) async {
     assert(
         (glossaryId != null && glossaryInfo == null) ||
             (glossaryId == null && glossaryInfo != null),
         'glossaryId and glossaryInfo are both not null or both null. only one is allowed');
     glossaryId = glossaryId ?? glossaryInfo!.glossaryId;
     assert(glossaryId.isNotEmpty, 'glossaryId must be a non-empty string');
-    Uri uri = _buildUri(_serverUrl, '/v2/glossaries/$glossaryId');
-    Response response = await _httpClient.delete(uri, headers: _headers);
+    Uri uri = _buildUri(_config._serverUrl, '/v2/glossaries/$glossaryId');
+    Response response =
+        await _config._httpClient.delete(uri, headers: _config._headers);
     await _checkStatusCode(response.statusCode, response.body,
         reasonPhrase: response.reasonPhrase, usingGlossary: true);
   }
+}
 
-  // ============ PRIVATE ======================================================
+class Languages {
+  final _DeepLConfig _config;
 
-  /// Validates and prepares URLSearchParams for arguments common to text and
-  /// document translation.
-  Map<String, String> _buildURLSearchParams({
-    String? sourceLang,
-    required String targetLang,
-    String? formality,
-    String? glossaryId,
-  }) {
-    assert(targetLang != 'en',
-        "targetLang='en' is deprecated, please use 'en-GB' or 'en-US' instead.");
-    assert(targetLang != 'pt',
-        "targetLang='pt' is deprecated, please use 'pt-PT' or 'pt-BR' instead.");
-    targetLang = _standardizeLanguageCode(targetLang);
-    if (sourceLang != null) {
-      sourceLang = _standardizeLanguageCode(sourceLang);
-    }
-    if (glossaryId != null && sourceLang == null) {
-      throw DeepLError(message: 'sourceLang is required if using a glossary');
-    }
-    Map<String, String> urlSearchParams = {
-      'target_lang': targetLang,
-    };
-    if (sourceLang != null) {
-      urlSearchParams['source_lang'] = sourceLang;
-    }
-    if (formality != null && formality != 'default') {
-      urlSearchParams['formality'] = formality.toLowerCase();
-    }
-    if (glossaryId != null) {
-      urlSearchParams['glossary_id'] = glossaryId;
-    }
-    return urlSearchParams;
-  }
+  Languages._fromConfig(this._config);
 
-  /// Changes the upper- and lower-casing of the given language code to match ISO
-  /// 639-1 with an optional regional code from ISO 3166-1. For example, input
-  /// 'EN-US' returns 'en-US'.
+  /// Queries source languages supported by DeepL API.
   ///
-  /// Takes [langCode] containing language code to standardize.
-  ///
-  /// Returns standardized language code.
-  String _standardizeLanguageCode(String langCode) {
-    assert(langCode.isNotEmpty, 'langCode must be a non-empty string');
-    List<String> parts = langCode.split('-');
-    return parts.length < 2 || parts[1].isEmpty
-        ? parts[0].toLowerCase()
-        : '${parts[0].toLowerCase()}-${parts[1].toUpperCase()}';
-  }
+  /// Fulfills with array of [Language] objects containing available source
+  /// languages.
+  Future<List<Language>> getSources() async => _get('source');
 
-  /// Removes the regional variant from a language, for example inputs 'en' and
-  /// 'en-US' both return 'en'.
+  /// Queries target languages supported by DeepL API.
   ///
-  /// Takes [langCode] string containing language code to convert.
-  ///
-  /// Returns language code with regional variant removed.
-  String _nonRegionalLanguageCode(String langCode) {
-    assert(langCode.isNotEmpty, 'langCode must be a non-empty string');
-    return langCode.split('-')[0].toLowerCase();
-  }
+  /// Fulfills with array of [Language] objects containing available target
+  /// languages.
+  Future<List<Language>> getTargets() async => _get('target');
 
-  /// Builds an URI to send a request to.
-  Uri _buildUri(String serverUrl, String path,
-      {Map<String, String>? urlSearchParams}) {
-    StringBuffer sb = StringBuffer(serverUrl);
-    sb.write(path);
-    sb.write('?');
-    if (urlSearchParams != null) {
-      String paramsString =
-          urlSearchParams.entries.map((e) => '${e.key}=${e.value}').join('&');
-      sb.write(paramsString);
+  Future<List<Language>> _get(String type) async {
+    Uri uri = _buildUri(_config._serverUrl, '/v2/languages',
+        urlSearchParams: {'type': type});
+    Response response =
+        await _config._httpClient.get(uri, headers: _config._headers);
+    await _checkStatusCode(response.statusCode, response.body,
+        reasonPhrase: response.reasonPhrase);
+    List<dynamic> decodedJson = jsonDecode(response.body);
+    return decodedJson.map((json) => Language.fromJson(json)).toList();
+  }
+}
+
+/// Returns true if the specified DeepL Authentication Key is associated with a free account,
+/// otherwise false.
+///
+/// Takes an [authKey] to check and returns [True] if the key is associated with
+/// a free account, otherwise [False].
+bool isFreeAccountAuthKey(String authKey) => authKey.endsWith(':fx');
+
+/// Builds an URI to send a request to.
+Uri _buildUri(String serverUrl, String path,
+    {Map<String, String>? urlSearchParams}) {
+  StringBuffer sb = StringBuffer(serverUrl);
+  sb.write(path);
+  sb.write('?');
+  if (urlSearchParams != null) {
+    String paramsString =
+        urlSearchParams.entries.map((e) => '${e.key}=${e.value}').join('&');
+    sb.write(paramsString);
+  }
+  return Uri.parse(sb.toString());
+}
+
+/// Checks the HTTP status code, and in case of failure, throws an exception with diagnostic information.
+Future<void> _checkStatusCode(
+  int statusCode,
+  String content, {
+  String? reasonPhrase = 'Unknown',
+  bool usingGlossary = false,
+  bool inDocumentDownload = false,
+}) async {
+  if (200 <= statusCode && statusCode < 400) return;
+  String message = '';
+  try {
+    Map<String, dynamic> jsonObj = jsonDecode(content);
+    if (jsonObj['message'] != null) {
+      message += ', message: ${jsonObj['message']}';
     }
-    return Uri.parse(sb.toString());
+    if (jsonObj['detail'] != null) {
+      message += ', detail: ${jsonObj['detail']}';
+    }
+  } catch (error) {
+    // JSON parsing errors are ignored, and we fall back to the raw content
+    message = ', $content';
   }
-
-  /// Checks the HTTP status code, and in case of failure, throws an exception with diagnostic information.
-  Future<void> _checkStatusCode(
-    int statusCode,
-    String content, {
-    String? reasonPhrase = 'Unknown',
-    bool usingGlossary = false,
-    bool inDocumentDownload = false,
-  }) async {
-    if (200 <= statusCode && statusCode < 400) return;
-    String message = '';
-    try {
-      Map<String, dynamic> jsonObj = jsonDecode(content);
-      if (jsonObj['message'] != null) {
-        message += ', message: ${jsonObj['message']}';
+  switch (statusCode) {
+    case 403:
+      throw AuthorizationError(
+          message: 'Authorization failure, check auth_key$message');
+    case 456:
+      throw QuotaExceededError(
+        message: 'Quota for this billing period has been exceeded$message',
+      );
+    case 404:
+      if (usingGlossary) {
+        throw GlossaryNotFoundError(message: 'Glossary not found$message');
       }
-      if (jsonObj['detail'] != null) {
-        message += ', detail: ${jsonObj['detail']}';
+      throw DeepLError(message: 'Not found, check server_url$message');
+    case 400:
+      throw DeepLError(message: 'Bad request$message');
+    case 429:
+      throw TooManyRequestsError(
+        message:
+            'Too many requests, DeepL servers are currently experiencing high load$message',
+      );
+    case 503:
+      if (inDocumentDownload) {
+        throw DocumentNotReadyError(message: 'Document not ready$message');
+      } else {
+        throw DeepLError(message: 'Service unavailable$message');
       }
-    } catch (error) {
-      // JSON parsing errors are ignored, and we fall back to the raw content
-      message = ', $content';
-    }
-    switch (statusCode) {
-      case 403:
-        throw AuthorizationError(
-            message: 'Authorization failure, check auth_key$message');
-      case 456:
-        throw QuotaExceededError(
-          message: 'Quota for this billing period has been exceeded$message',
-        );
-      case 404:
-        if (usingGlossary) {
-          throw GlossaryNotFoundError(message: 'Glossary not found$message');
-        }
-        throw DeepLError(message: 'Not found, check server_url$message');
-      case 400:
-        throw DeepLError(message: 'Bad request$message');
-      case 429:
-        throw TooManyRequestsError(
+    default:
+      {
+        throw DeepLError(
           message:
-              'Too many requests, DeepL servers are currently experiencing high load$message',
+              'Unexpected status code: $statusCode $reasonPhrase$message, content: $content',
         );
-      case 503:
-        if (inDocumentDownload) {
-          throw DocumentNotReadyError(message: 'Document not ready$message');
-        } else {
-          throw DeepLError(message: 'Service unavailable$message');
-        }
-      default:
-        {
-          throw DeepLError(
-            message:
-                'Unexpected status code: $statusCode $reasonPhrase$message, content: $content',
-          );
-        }
-    }
+      }
   }
+}
+
+/// Validates and prepares URLSearchParams for arguments common to text and
+/// document translation.
+Map<String, String> _buildURLSearchParams({
+  String? sourceLang,
+  required String targetLang,
+  String? formality,
+  String? glossaryId,
+}) {
+  assert(targetLang != 'en',
+      "targetLang='en' is deprecated, please use 'en-GB' or 'en-US' instead.");
+  assert(targetLang != 'pt',
+      "targetLang='pt' is deprecated, please use 'pt-PT' or 'pt-BR' instead.");
+  targetLang = _standardizeLanguageCode(targetLang);
+  if (sourceLang != null) {
+    sourceLang = _standardizeLanguageCode(sourceLang);
+  }
+  if (glossaryId != null && sourceLang == null) {
+    throw DeepLError(message: 'sourceLang is required if using a glossary');
+  }
+  Map<String, String> urlSearchParams = {
+    'target_lang': targetLang,
+  };
+  if (sourceLang != null) {
+    urlSearchParams['source_lang'] = sourceLang;
+  }
+  if (formality != null && formality != 'default') {
+    urlSearchParams['formality'] = formality.toLowerCase();
+  }
+  if (glossaryId != null) {
+    urlSearchParams['glossary_id'] = glossaryId;
+  }
+  return urlSearchParams;
+}
+
+/// Changes the upper- and lower-casing of the given language code to match ISO
+/// 639-1 with an optional regional code from ISO 3166-1. For example, input
+/// 'EN-US' returns 'en-US'.
+///
+/// Takes [langCode] containing language code to standardize.
+///
+/// Returns standardized language code.
+String _standardizeLanguageCode(String langCode) {
+  assert(langCode.isNotEmpty, 'langCode must be a non-empty string');
+  List<String> parts = langCode.split('-');
+  return parts.length < 2 || parts[1].isEmpty
+      ? parts[0].toLowerCase()
+      : '${parts[0].toLowerCase()}-${parts[1].toUpperCase()}';
+}
+
+/// Removes the regional variant from a language, for example inputs 'en' and
+/// 'en-US' both return 'en'.
+///
+/// Takes [langCode] string containing language code to convert.
+///
+/// Returns language code with regional variant removed.
+String _nonRegionalLanguageCode(String langCode) {
+  assert(langCode.isNotEmpty, 'langCode must be a non-empty string');
+  return langCode.split('-')[0].toLowerCase();
 }
