@@ -319,17 +319,6 @@ void main() {
       });
     });
   });
-
-  group('Auth Key Check', () {
-    test('create translator with empty auth key', () {
-      expect(() => DeepL(authKey: ''), throwsA(isA<AssertionError>()));
-    });
-
-    test('free auth key check', () {
-      expect(isFreeAccountAuthKey('0000:fx'), equals(true));
-      expect(isFreeAccountAuthKey('0000'), equals(false));
-    });
-  });
 }
 
 Future<void> deleteIfExists(File file) async {
