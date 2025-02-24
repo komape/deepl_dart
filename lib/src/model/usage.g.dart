@@ -7,10 +7,10 @@ part of 'usage.dart';
 // **************************************************************************
 
 Usage _$UsageFromJson(Map<String, dynamic> json) => Usage(
-      characterCount: json['character_count'] as int,
-      characterLimit: json['character_limit'] as int,
-      documentCount: json['document_count'] as int?,
-      documentLimit: json['document_limit'] as int?,
-      teamDocumentCount: json['team_document_count'] as int?,
-      teamDocumentLimit: json['team_document_limit'] as int?,
+      characterCount: (json['character_count'] as num).toInt(),
+      characterLimit: (json['character_limit'] as num).toInt(),
+      documentCount: (json['document_count'] as num?)?.toInt(),
+      documentLimit: (json['document_limit'] as num?)?.toInt(),
+      teamDocumentCount: (json['team_document_count'] as num?)?.toInt(),
+      teamDocumentLimit: (json['team_document_limit'] as num?)?.toInt(),
     );

@@ -2,20 +2,20 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:deepl_dart/src/model/errors.dart';
-import 'package:deepl_dart/src/model/document_handle.dart';
-import 'package:deepl_dart/src/model/document_status.dart';
-import 'package:deepl_dart/src/model/document_translate_options.dart';
-import 'package:deepl_dart/src/model/document_translation_status.dart';
-import 'package:deepl_dart/src/model/glossary_entries.dart';
-import 'package:deepl_dart/src/model/glossary_info.dart';
-import 'package:deepl_dart/src/model/glossary_info_list_api_response.dart';
-import 'package:deepl_dart/src/model/glossary_language_pair.dart';
-import 'package:deepl_dart/src/model/glossary_language_pair_list_api_reponse.dart';
-import 'package:deepl_dart/src/model/language.dart';
-import 'package:deepl_dart/src/model/text_result.dart';
-import 'package:deepl_dart/src/model/text_result_response.dart';
-import 'package:deepl_dart/src/model/text_translation_request.dart';
-import 'package:deepl_dart/src/model/translate_text_options.dart';
+import 'package:deepl_dart/src/model/translate/document_handle.dart';
+import 'package:deepl_dart/src/model/translate/document_status.dart';
+import 'package:deepl_dart/src/model/translate/document_translate_options.dart';
+import 'package:deepl_dart/src/model/translate/document_translation_status.dart';
+import 'package:deepl_dart/src/model/glossaries/glossary_entries.dart';
+import 'package:deepl_dart/src/model/glossaries/glossary_info.dart';
+import 'package:deepl_dart/src/model/glossaries/glossary_info_list_api_response.dart';
+import 'package:deepl_dart/src/model/glossaries/glossary_language_pair.dart';
+import 'package:deepl_dart/src/model/glossaries/glossary_language_pair_list_api_reponse.dart';
+import 'package:deepl_dart/src/model/languages/language.dart';
+import 'package:deepl_dart/src/model/translate/text_result.dart';
+import 'package:deepl_dart/src/model/translate/text_result_response.dart';
+import 'package:deepl_dart/src/model/translate/text_translation_request.dart';
+import 'package:deepl_dart/src/model/translate/translate_text_options.dart';
 import 'package:deepl_dart/src/model/usage.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
@@ -24,7 +24,8 @@ import 'package:universal_io/io.dart';
 
 /// Wrapper for the DeepL API for language translation. Create an instance of
 /// Translator to use the DeepL API.
-@Deprecated("Use the DeepL class instead. See changelog for detailed guidance. This class will be removed in a future release.")
+@Deprecated(
+    "Use the DeepL class instead. See changelog for detailed guidance. This class will be removed in the next major release.")
 class Translator {
   late String _serverUrl;
   late Map<String, String> _headers;
