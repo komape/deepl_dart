@@ -3,10 +3,15 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:deepl_dart/deepl_dart.dart';
-import 'package:deepl_dart/src/model/glossary_info_list_api_response.dart';
-import 'package:deepl_dart/src/model/glossary_language_pair_list_api_reponse.dart';
-import 'package:deepl_dart/src/model/text_result_response.dart';
-import 'package:deepl_dart/src/model/text_translation_request.dart';
+import 'package:deepl_dart/src/model/glossaries/glossary_info_list_api_response.dart';
+import 'package:deepl_dart/src/model/glossaries/glossary_language_pair_list_api_reponse.dart';
+import 'package:deepl_dart/src/model/translate/text_result_response.dart';
+import 'package:deepl_dart/src/model/translate/text_translation_request.dart';
+import 'package:deepl_dart/src/model/write/text_rephrase_request.dart';
+import 'package:deepl_dart/src/model/write/text_rephrase_response.dart';
+import 'package:deepl_dart/src/model/write/text_rephrase_result.dart';
+import 'package:deepl_dart/src/model/write/tone.dart';
+import 'package:deepl_dart/src/model/write/writing_style.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
 import 'package:http/retry.dart';
@@ -22,13 +27,13 @@ class DeepL {
   /// Construct a DeepL object wrapping the DeepL API using your authentication
   /// key. Use submodules for different API functionalities. Currently supported
   /// submodules are [translate], [write], [glossaries], and [languages].
-  /// 
+  ///
   /// [translate] submodule provides text and document translation.
-  /// 
+  ///
   /// [write] submodule provides rephrasing functionality.
-  /// 
+  ///
   /// [glossaries] submodule provides glossary creation, inspection, and deletion.
-  /// 
+  ///
   /// [languages] submodule provides language information.
   ///
   /// This does not connect to the API, and returns immediately.
@@ -380,15 +385,56 @@ class Write {
 
   Write._fromConfig(this._config);
 
-  String rephrase() {
-    throw UnimplementedError();
+  Future<TextRephraseResult> rephraseText(
+    String text, {
+    String? targetLang,
+    WritingStyle? writingStyle,
+    Tone? tone,
+  }) async {
+    assert(text.isNotEmpty, 'text parameter must be a non-empty string');
+    List<TextRephraseResult> textResults = await rephraseTextList([text],
+        targetLang: targetLang, writingStyle: writingStyle, tone: tone);
+    return textResults[0];
+  }
+
+  Future<List<TextRephraseResult>> rephraseTextList(
+    List<String> texts, {
+    String? targetLang,
+    WritingStyle? writingStyle,
+    Tone? tone,
+  }) async {
+    assert(texts.isNotEmpty, 'texts parameter must not be a non-empty list');
+    assert(texts.length <= 50,
+        'texts parameter can contain 50 elements at maximum');
+    assert(texts.every((t) => t.isNotEmpty),
+        'texts parameter must not be an array of non-empty strings');
+    assert(writingStyle == null || tone == null,
+        'It’s not possible to include both writingStyle and tone in a request; only one or the other can be included.');
+    final TextRephraseRequest trr = TextRephraseRequest(
+        text: texts,
+        targetLang: targetLang,
+        writingStyle: writingStyle,
+        tone: tone);
+    Response rephraseRes = await _config._httpClient.post(
+        _buildUri(_config._serverUrl, '/v2/write/rephrase'),
+        headers: {..._config._headers}
+          ..addAll({'Content-Type': 'application/json'}),
+        body: trr.toJson(),
+        encoding: Encoding.getByName('utf8'));
+    await _checkStatusCode(rephraseRes.statusCode, rephraseRes.body,
+        reasonPhrase: rephraseRes.reasonPhrase);
+    List<TextRephraseResult> textRephraseResults =
+        TextRephraseResponse.fromJson(
+                jsonDecode(utf8.decode(rephraseRes.bodyBytes)))
+            .improvements;
+    return textRephraseResults;
   }
 }
 
 /// [Glossaries] functions allow you to create, inspect, and delete glossaries.
 /// Glossaries created with [Glossaries] can be used in translate requests by
 /// specifying the [glossaryId] parameter in the [TranslateTextOptions] object.
-/// 
+///
 /// Note: Glossaries created via the DeepL API are distinct from glossaries
 /// created via the DeepL website and DeepL apps. This means API glossaries
 /// cannot be used on the website and vice versa.

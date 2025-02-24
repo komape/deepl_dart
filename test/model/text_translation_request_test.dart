@@ -1,4 +1,4 @@
-import 'package:deepl_dart/src/model/text_translation_request.dart';
+import 'package:deepl_dart/src/model/translate/text_translation_request.dart';
 import 'package:test/test.dart';
 import 'package:deepl_dart/deepl_dart.dart';
 
