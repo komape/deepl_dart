@@ -1,9 +1,6 @@
 import 'dart:io';
 
 import 'package:deepl_dart/deepl_dart.dart';
-import 'package:deepl_dart/src/model/write/text_rephrase_result.dart';
-import 'package:deepl_dart/src/model/write/tone.dart';
-import 'package:deepl_dart/src/model/write/writing_style.dart';
 import 'package:test/test.dart';
 
 void main() {
