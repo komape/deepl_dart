@@ -14,20 +14,14 @@ void main() async {
 
   // ============ TRANSLATE ====================================================
 
-  // Get available languages
-  List<Language> sourceLangs = await deepl.languages.getSources();
-  print(sourceLangs);
-  List<Language> targetLangs = await deepl.languages.getTargets();
-  print(targetLangs);
-
   // Translate single text
-  TextResult result =
-      await deepl.translate.translateTextSingular('Hello World', 'de');
+  TextResult result = await deepl.translate.translateText('Hello World', 'de');
   print(result);
 
   // Translate single text with options
   TextResult resultWithOptions =
-      await deepl.translate.translateTextSingular('Hello World', 'de',
+      await deepl.translate.translateText('Hello World', 'de',
+          sourceLang: 'en',
           options: TranslateTextOptions(
             splitSentences: "0",
             preserveFormatting: true,
@@ -35,9 +29,9 @@ void main() async {
             glossaryId: "123",
             tagHandling: "xml",
             outlineDetection: true,
-            nonSplittingTags: "tag1,tag2",
-            splittingTags: "tag3,tag4",
-            ignoreTags: "tag5,tag6",
+            nonSplittingTags: ["tag1", "tag2"],
+            splittingTags: ["tag3", "tag4"],
+            ignoreTags: ["tag5", "tag6"],
             context: "This is my context.",
           ));
   print(resultWithOptions);
@@ -51,6 +45,35 @@ void main() async {
   DocumentStatus status = await deepl.translate.translateDocument(
       File('<input_file_path>'), File('<output_file_path>'), 'de');
   print(status);
+
+  // ============ WRITE ========================================================
+
+  // Rephrase text
+  TextRephraseResult rephraseResult =
+      await deepl.write.rephraseText('This is a sample sentence to improve.');
+  print(rephraseResult);
+
+  // Rephrase multiple texts
+  List<TextRephraseResult> rephraseResults =
+      await deepl.write.rephraseTextList([
+    'This is a sample sentence to improve.',
+    'This is another sample sentence to improve.',
+  ]);
+  print(rephraseResults);
+
+  // Rephrase text with writing style
+  TextRephraseResult rephraseResultWithStyle = await deepl.write.rephraseText(
+    'This is a sample sentence to improve.',
+    writingStyle: WritingStyle.academic,
+  );
+  print(rephraseResultWithStyle);
+
+  // Rephrase text with tone
+  TextRephraseResult rephraseResultWithTone = await deepl.write.rephraseText(
+    'This is a sample sentence to improve.',
+    tone: Tone.diplomatic,
+  );
+  print(rephraseResultWithTone);
 
   // ============ GLOSSARY =====================================================
 
@@ -95,6 +118,14 @@ void main() async {
 
   // Delete glossary
   await deepl.glossaries.delete(glossaryId: glossaryInfo.glossaryId);
+
+  // ============ LANGUAGES ====================================================
+
+  // Get available languages
+  List<Language> sourceLangs = await deepl.languages.getSources();
+  print(sourceLangs);
+  List<Language> targetLangs = await deepl.languages.getTargets();
+  print(targetLangs);
 
   // ============ USAGE ========================================================
 
