@@ -9,9 +9,6 @@ import 'package:deepl_dart/src/model/translate/text_result_response.dart';
 import 'package:deepl_dart/src/model/translate/text_translation_request.dart';
 import 'package:deepl_dart/src/model/write/text_rephrase_request.dart';
 import 'package:deepl_dart/src/model/write/text_rephrase_response.dart';
-import 'package:deepl_dart/src/model/write/text_rephrase_result.dart';
-import 'package:deepl_dart/src/model/write/tone.dart';
-import 'package:deepl_dart/src/model/write/writing_style.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
 import 'package:http/retry.dart';
@@ -123,6 +120,8 @@ class Translate {
 
   // ============ TEXT TRANSLATION =============================================
 
+  /// DEPRECATED: Use [translateText] instead.
+  ///
   /// Translates specified text string into the target language.
   ///
   /// Takes [text] to be translated.
@@ -137,6 +136,7 @@ class Translate {
   ///
   /// Fulfills with a [TextResult] object; use the `TextResult.text` property to
   /// access the translated text.
+  @Deprecated('Use [translateText] instead')
   Future<TextResult> translateTextSingular(
     String text,
     String targetLang, {
@@ -380,11 +380,39 @@ class Translate {
   }
 }
 
+// ============ WRITER =========================================================
+
+/// Wrapper for the DeepL API for text rephrasing.
 class Write {
   final _DeepLConfig _config;
 
   Write._fromConfig(this._config);
 
+  /// Rephrase the specified text to improve style, grammar, and tone.
+  ///
+  /// Takes [text] to be rephrased. It may contain multiple sentences.
+  ///
+  /// Takes [targetLang] as the language for the text improvement. The language
+  /// of the source texts sent in the text parameter must match the target
+  /// language (translating and improving text simultaneously is not yet
+  /// supported). Note that it is possible to convert text from one variant to
+  /// another within a language. For example, if American English is sent in a
+  /// request with [targetLang] set to EN-GB, the submitted text will be
+  /// improved and also converted to British English.
+  ///
+  /// Takes [writingStyle] to specify a style to rephrase your text in a way
+  /// that fits your audience and goals. The options prefixed with `prefer`
+  /// allow falling back to the default style if the language does not yet
+  /// support styles. It’s not possible to include both [writingStyle] and
+  /// [tone] in a request; only one or the other can be included.
+  ///
+  /// Takes [tone] to specify the desired tone for your text. The options
+  /// prefixed with `prefer` allow falling back to the default tone if the
+  /// language does not yet support tones. It’s not possible to include both
+  /// [writingStyle] and [tone] in a request; only one or the other can be
+  /// included.
+  ///
+  /// Fulfills with a [TextRephraseResult] object containing the rephrased text.
   Future<TextRephraseResult> rephraseText(
     String text, {
     String? targetLang,
@@ -397,6 +425,32 @@ class Write {
     return textResults[0];
   }
 
+  /// Rephrase the specified texts to improve style, grammar, and tone.
+  ///
+  /// Takes [texts] to be rephrased. Each of the texts may contain multiple
+  /// sentences. All texts must be in the same language.
+  ///
+  /// Takes [targetLang] as the language for the text improvement. The language
+  /// of the source texts sent in the text parameter must match the target
+  /// language (translating and improving text simultaneously is not yet
+  /// supported). Note that it is possible to convert text from one variant to
+  /// another within a language. For example, if American English is sent in a
+  /// request with [targetLang] set to EN-GB, the submitted text will be
+  /// improved and also converted to British English.
+  ///
+  /// Takes [writingStyle] to specify a style to rephrase your text in a way
+  /// that fits your audience and goals. The options prefixed with `prefer`
+  /// allow falling back to the default style if the language does not yet
+  /// support styles. It’s not possible to include both [writingStyle] and
+  /// [tone] in a request; only one or the other can be included.
+  ///
+  /// Takes [tone] to specify the desired tone for your text. The options
+  /// prefixed with `prefer` allow falling back to the default tone if the
+  /// language does not yet support tones. It’s not possible to include both
+  /// [writingStyle] and [tone] in a request; only one or the other can be
+  /// included.
+  ///
+  /// Fulfills with a [TextRephraseResult] object containing the rephrased text.
   Future<List<TextRephraseResult>> rephraseTextList(
     List<String> texts, {
     String? targetLang,
@@ -431,6 +485,8 @@ class Write {
   }
 }
 
+// ============ GLOSSARIES =====================================================
+
 /// [Glossaries] functions allow you to create, inspect, and delete glossaries.
 /// Glossaries created with [Glossaries] can be used in translate requests by
 /// specifying the [glossaryId] parameter in the [TranslateTextOptions] object.
@@ -442,6 +498,16 @@ class Glossaries {
   final _DeepLConfig _config;
 
   Glossaries._fromConfig(this._config);
+
+  /// DEPRECATED: Use [getLanguagePairs] instead.
+  ///
+  /// Queries language pairs supported for glossaries by DeepL API.
+  ///
+  /// Fulfills with an array of [GlossaryLanguagePair] objects containing
+  /// languages supported for glossaries.
+  @Deprecated('Use [getLanguagePairs] instead')
+  Future<List<GlossaryLanguagePair>> getGlossaryLanguagePairs() async =>
+      getLanguagePairs();
 
   /// Queries language pairs supported for glossaries by DeepL API.
   ///
@@ -457,6 +523,33 @@ class Glossaries {
             jsonDecode(response.body))
         .supportedLanguages;
   }
+
+  /// DEPRECATED: Use [create] instead.
+  ///
+  /// Creates a new glossary on DeepL server with given name, languages, and
+  /// entries.
+  ///
+  /// Takes user-defined [name] to assign to the glossary.
+  ///
+  /// Takes [sourceLang] language code of the glossary source terms.
+  ///
+  /// Takes [targetLang] language code of the glossary target terms.
+  ///
+  /// Takes [entries] as the source- & target-term pairs to add to the glossary.
+  ///
+  /// Fulfills with a [GlossaryInfo] containing details about the created
+  /// glossary.
+  @Deprecated('Use [create] instead')
+  Future<GlossaryInfo> createGlossary(
+          {required String name,
+          required String sourceLang,
+          required String targetLang,
+          required GlossaryEntries entries}) async =>
+      create(
+          name: name,
+          sourceLang: sourceLang,
+          targetLang: targetLang,
+          entries: entries);
 
   /// Creates a new glossary on DeepL server with given name, languages, and
   /// entries.
@@ -486,6 +579,34 @@ class Glossaries {
         entriesFormat: 'tsv',
         entries: tsvContent);
   }
+
+  /// DEPRECATED: Use [createWithCsvFile] instead.
+  ///
+  /// Creates a new glossary on DeepL server with given name, languages, and CSV
+  /// data.
+  ///
+  /// Takes user-defined [name] to assign to the glossary.
+  ///
+  /// Takes [sourceLang] language code of the glossary source terms.
+  ///
+  /// Takes [targetLang] language code of the glossary target terms.
+  ///
+  /// Takes [csvFile] containing the source- & target-term pairs as CSV to add
+  /// to the glossary.
+  ///
+  /// Fulfills with a [GlossaryInfo] containing details about the created
+  /// glossary.
+  @Deprecated('Use [createWithCsvFile] instead')
+  Future<GlossaryInfo> createGlossaryWithCsvFile(
+          {required String name,
+          required String sourceLang,
+          required String targetLang,
+          required File csvFile}) async =>
+      createWithCsvFile(
+          name: name,
+          sourceLang: sourceLang,
+          targetLang: targetLang,
+          csvFile: csvFile);
 
   /// Creates a new glossary on DeepL server with given name, languages, and CSV
   /// data.
@@ -543,6 +664,16 @@ class Glossaries {
     return GlossaryInfo.fromJson(jsonDecode(response.body));
   }
 
+  /// DEPRECATED: Use [get] instead.
+  ///
+  /// Gets information about an existing glossary.
+  ///
+  /// Takes [glossaryId] of the glossary.
+  ///
+  /// Fulfills with a [GlossaryInfo] containing details about the glossary.
+  @Deprecated('Use [get] instead')
+  Future<GlossaryInfo> getGlossary(String glossaryId) async => get(glossaryId);
+
   /// Gets information about an existing glossary.
   ///
   /// Takes [glossaryId] of the glossary.
@@ -558,6 +689,15 @@ class Glossaries {
     return GlossaryInfo.fromJson(jsonDecode(response.body));
   }
 
+  /// DEPRECATED: Use [list] instead.
+  ///
+  /// Gets information about all existing glossaries.
+  ///
+  /// Fulfills with an array of [GlossaryInfo] containing details about all
+  /// existing glossaries.
+  @Deprecated('Use [list] instead')
+  Future<List<GlossaryInfo>> listGlossaries() async => list();
+
   /// Gets information about all existing glossaries.
   ///
   /// Fulfills with an array of [GlossaryInfo] containing details about all
@@ -571,6 +711,19 @@ class Glossaries {
     return GlossaryInfoListApiResponse.fromJson(jsonDecode(response.body))
         .glossaries;
   }
+
+  /// DEPRECATED: Use [getGlossaryEntries] instead.
+  ///
+  /// Retrieves the entries stored with the glossary with the given glossary ID
+  /// or GlossaryInfo.
+  ///
+  /// Takes [glossaryId] or [glossaryInfo] of glossary to retrieve entries of.
+  ///
+  /// Fulfills with [GlossaryEntries] holding the glossary entries.
+  @Deprecated('Use [getGlossaryEntries] instead')
+  Future<GlossaryEntries> getGlossaryEntries(
+          {String? glossaryId, GlossaryInfo? glossaryInfo}) async =>
+      getEntries(glossaryId: glossaryId, glossaryInfo: glossaryInfo);
 
   /// Retrieves the entries stored with the glossary with the given glossary ID
   /// or GlossaryInfo.
@@ -595,6 +748,16 @@ class Glossaries {
     return GlossaryEntries.constructFromTsv(response.body);
   }
 
+  /// DEPRECATED: Use [delete] instead.
+  ///
+  /// Deletes the glossary with the given glossary ID or GlossaryInfo.
+  /// @param glossary Glossary ID or GlossaryInfo of glossary to be deleted.
+  /// @return Fulfills with undefined when the glossary is deleted.
+  @Deprecated('Use [delete] instead')
+  Future<void> deleteGlossary(
+          {String? glossaryId, GlossaryInfo? glossaryInfo}) async =>
+      delete(glossaryId: glossaryId, glossaryInfo: glossaryInfo);
+
   /// Deletes the glossary with the given glossary ID or GlossaryInfo.
   /// @param glossary Glossary ID or GlossaryInfo of glossary to be deleted.
   /// @return Fulfills with undefined when the glossary is deleted.
@@ -612,6 +775,8 @@ class Glossaries {
         reasonPhrase: response.reasonPhrase, usingGlossary: true);
   }
 }
+
+// ============ LANGUAGES ======================================================
 
 class Languages {
   final _DeepLConfig _config;
@@ -641,6 +806,8 @@ class Languages {
     return decodedJson.map((json) => Language.fromJson(json)).toList();
   }
 }
+
+// ============ HELPERS ========================================================
 
 /// Returns true if the specified DeepL Authentication Key is associated with a free account,
 /// otherwise false.

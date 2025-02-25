@@ -15,16 +15,14 @@ class TextTranslationRequest {
   final String targetLang;
   @JsonKey(toJson: _splitSentencesToJson)
   final String? splitSentences;
-  @JsonKey(toJson: _boolToJson)
   final bool? preserveFormatting;
   final String? formality;
   final String? glossaryId;
   final String? tagHandling;
-  @JsonKey(toJson: _boolToJson)
   final bool? outlineDetection;
-  final String? splittingTags;
-  final String? nonSplittingTags;
-  final String? ignoreTags;
+  final List<String>? splittingTags;
+  final List<String>? nonSplittingTags;
+  final List<String>? ignoreTags;
   final String? context;
 
   TextTranslationRequest({
@@ -72,10 +70,5 @@ class TextTranslationRequest {
       return '0';
     }
     return value;
-  }
-
-  static String? _boolToJson(bool? value) {
-    if (value == null) return null;
-    return value ? '1' : '0';
   }
 }
