@@ -128,18 +128,36 @@ void main() {
           throwsA(isA<AssertionError>()));
     });
     test('delete glossary', () async {
-      List<GlossaryInfo> infos = await glossaries.list();
-      expect(infos, isNotEmpty);
-      glossaries.delete(glossaryId: infos.first.glossaryId);
-      glossaries.delete(glossaryInfo: infos.first);
+      GlossaryInfo info = await glossaries.create(
+          name: "test 123",
+          sourceLang: sourceLang,
+          targetLang: targetLang,
+          entries: entries);
+      await glossaries.delete(glossaryId: info.glossaryId);
+      expect(glossaries.get(info.glossaryId),
+          throwsA(isA<GlossaryNotFoundError>()));
+      info = await glossaries.create(
+          name: "test 123",
+          sourceLang: "de",
+          targetLang: "en",
+          entries: entries);
+      await glossaries.delete(glossaryInfo: info);
+      expect(glossaries.get(info.glossaryId),
+          throwsA(isA<GlossaryNotFoundError>()));
     });
 
     test('delete glossary with invalid params', () async {
-      List<GlossaryInfo> infos = await glossaries.list();
-      expect(infos, isNotEmpty);
       expect(
           glossaries.delete(
-              glossaryId: infos.first.glossaryId, glossaryInfo: infos.first),
+              glossaryId: "123",
+              glossaryInfo: GlossaryInfo(
+                  glossaryId: "123",
+                  name: "test 123",
+                  ready: true,
+                  sourceLang: "de",
+                  targetLang: "en",
+                  creationTime: "2021-10-10T10:10:10Z",
+                  entryCount: 1)),
           throwsA(isA<AssertionError>()));
       expect(glossaries.delete(), throwsA(isA<AssertionError>()));
     });
