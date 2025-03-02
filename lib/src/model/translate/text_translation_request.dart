@@ -15,6 +15,7 @@ class TextTranslationRequest {
   final String targetLang;
   @JsonKey(toJson: _splitSentencesToJson)
   final String? splitSentences;
+  final bool? showBilledCharacters;
   final bool? preserveFormatting;
   final Formality? formality;
   final ModelType? modelType;
@@ -31,6 +32,7 @@ class TextTranslationRequest {
     this.sourceLang,
     required this.targetLang,
     this.splitSentences,
+    this.showBilledCharacters,
     this.preserveFormatting,
     this.formality,
     this.modelType,
@@ -49,6 +51,7 @@ class TextTranslationRequest {
     required this.targetLang,
     TranslateTextOptions? options,
   })  : splitSentences = options?.splitSentences,
+        showBilledCharacters = options?.showBilledCharacters,
         preserveFormatting = options?.preserveFormatting,
         formality = options?.formality,
         modelType = options?.modelType,

@@ -9,6 +9,7 @@ part of 'text_result.dart';
 TextResult _$TextResultFromJson(Map<String, dynamic> json) => TextResult(
       text: json['text'] as String,
       detectedSourceLanguage: json['detected_source_language'] as String,
+      billedCharacters: (json['billed_characters'] as num?)?.toInt(),
       modelTypeUsed:
           $enumDecodeNullable(_$ModelTypeEnumMap, json['model_type_used']),
     );

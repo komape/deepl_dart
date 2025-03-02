@@ -13,6 +13,11 @@ class TranslateTextOptions {
   /// using only punctuation but not newlines.
   String? splitSentences;
 
+  /// When true, the response will include the [billedCharacters] parameter,
+  /// giving the number of characters from the request that will be counted by
+  /// DeepL for billing purposes.
+  bool? showBilledCharacters;
+
   /// Set to true to prevent the translation engine from correcting some formatting aspects, and instead leave the formatting unchanged, default is false. */
   bool? preserveFormatting;
 
@@ -47,6 +52,7 @@ class TranslateTextOptions {
 
   TranslateTextOptions({
     this.splitSentences,
+    this.showBilledCharacters,
     this.preserveFormatting,
     this.formality,
     this.modelType,

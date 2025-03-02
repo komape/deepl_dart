@@ -15,6 +15,8 @@ Map<String, dynamic> _$TextTranslationRequestToJson(
       if (TextTranslationRequest._splitSentencesToJson(instance.splitSentences)
           case final value?)
         'split_sentences': value,
+      if (instance.showBilledCharacters case final value?)
+        'show_billed_characters': value,
       if (instance.preserveFormatting case final value?)
         'preserve_formatting': value,
       if (_$FormalityEnumMap[instance.formality] case final value?)

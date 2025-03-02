@@ -3,7 +3,9 @@
 ## 2.0.0
 
 - #27 Add writer functionality to rephrase and improve text
-- Add `modelType` parameter to translation requests, see `ModelType` for more info
+- Add `modelType` parameter to text translation requests, see `ModelType` for more info
+- Add `showBilledCharacters` parameter to text translation request
+  - If set to true, the response will contain the `billedCharacters` field
 
 ### Breaking changes
 

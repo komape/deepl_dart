@@ -77,6 +77,20 @@ void main() {
             throwsA(isA<AssertionError>()));
       });
 
+      test('translate text showing billed characters', () {
+        String input = 'How are you?';
+        String output = 'Wie geht es dir?';
+
+        TextResult result = TextResult(
+            text: output, detectedSourceLanguage: 'EN', billedCharacters: 12);
+
+        expect(
+            translator.translateText(input, 'de',
+                options: TranslateTextOptions(
+                    formality: Formality.less, showBilledCharacters: true)),
+            completion(equals(result)));
+      });
+
       test('translate text with formality', () {
         String input = 'How are you?';
         String formal = 'Wie geht es Ihnen?';

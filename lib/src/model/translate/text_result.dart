@@ -13,21 +13,27 @@ class TextResult {
   /// [String] code of the detected source language.
   final String detectedSourceLanguage;
 
+  /// Number of characters counted by DeepL for billing purposes. Only present
+  /// if the [showBilledCharacters] parameter is set to true.
+  final int? billedCharacters;
+
   /// Indicates the translation model used. Only present if [modelType]
   /// parameter is included in the request.
   final ModelType? modelTypeUsed;
 
-  TextResult(
-      {required this.text,
-      required this.detectedSourceLanguage,
-      this.modelTypeUsed});
+  TextResult({
+    required this.text,
+    required this.detectedSourceLanguage,
+    this.billedCharacters,
+    this.modelTypeUsed,
+  });
 
   factory TextResult.fromJson(Map<String, dynamic> json) =>
       _$TextResultFromJson(json);
 
   @override
   String toString() =>
-      'TextResult[text: $text, detectedSourceLang: $detectedSourceLanguage, modelTypeUsed: $modelTypeUsed]';
+      'TextResult[text: $text, detectedSourceLang: $detectedSourceLanguage, billedCharacters: $billedCharacters, modelTypeUsed: $modelTypeUsed]';
 
   @override
   bool operator ==(Object other) {
@@ -35,6 +41,7 @@ class TextResult {
     return text == other.text &&
         detectedSourceLanguage.toLowerCase() ==
             other.detectedSourceLanguage.toLowerCase() &&
+        billedCharacters == other.billedCharacters &&
         modelTypeUsed == other.modelTypeUsed;
   }
 
@@ -42,5 +49,6 @@ class TextResult {
   int get hashCode =>
       text.hashCode +
       detectedSourceLanguage.toLowerCase().hashCode +
-      modelTypeUsed.hashCode;
+      (billedCharacters?.hashCode ?? 0) +
+      (modelTypeUsed?.hashCode ?? 0);
 }
