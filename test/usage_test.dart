@@ -6,15 +6,15 @@ import 'package:test/test.dart';
 void main() {
   group('Usage Tests', () {
     String? authKey = Platform.environment['DEEPL_AUTH_KEY'];
-    late Translator translator;
+    late DeepL deepl;
 
     setUpAll(() {
       assert(authKey != null, 'found no authentication key');
-      translator = Translator(authKey: authKey!);
+      deepl = DeepL(authKey: authKey!);
     });
 
     test('get usage', () async {
-      Usage usage = await translator.getUsage();
+      Usage usage = await deepl.getUsage();
       expect(usage.characterCount <= usage.characterLimit, isTrue);
       expect(usage.anyLimitReached(), isFalse);
     });

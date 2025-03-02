@@ -11,7 +11,7 @@ import 'translation_test.dart';
 void main() {
   group('Glossary Tests', () {
     String? authKey = Platform.environment['DEEPL_AUTH_KEY'];
-    late Translator translator;
+    late Glossaries glossaries;
 
     String name = 'test glossary';
     String sourceLang = 'en';
@@ -20,15 +20,15 @@ void main() {
 
     setUpAll(() {
       assert(authKey != null, 'found no authentication key');
-      translator = Translator(authKey: authKey!);
+      glossaries = DeepL(authKey: authKey!).glossaries;
     });
 
     test('get glossary language pairs', () async {
-      expect(translator.getGlossaryLanguagePairs(), completion(isNotEmpty));
+      expect(glossaries.getLanguagePairs(), completion(isNotEmpty));
     });
 
     test('create glossary', () async {
-      GlossaryInfo info = await translator.createGlossary(
+      GlossaryInfo info = await glossaries.create(
           name: name,
           sourceLang: sourceLang,
           targetLang: targetLang,
@@ -44,7 +44,7 @@ void main() {
 
     test('create glossary with invalid name', () {
       expect(
-          translator.createGlossary(
+          glossaries.create(
               name: '',
               sourceLang: sourceLang,
               targetLang: targetLang,
@@ -54,7 +54,7 @@ void main() {
 
     test('create glossary with empty entries', () {
       expect(
-          translator.createGlossary(
+          glossaries.create(
               name: name,
               sourceLang: sourceLang,
               targetLang: targetLang,
@@ -64,7 +64,7 @@ void main() {
 
     test('create glossary with invalid lang code', () {
       expect(
-          translator.createGlossary(
+          glossaries.create(
               name: name,
               sourceLang: '',
               targetLang: targetLang,
@@ -75,7 +75,7 @@ void main() {
     test('create glossary with csv file', () async {
       File csvFile = File('csvFile.csv');
       csvFile.writeAsStringSync('"Hello","Hi",en,de');
-      GlossaryInfo info = await translator.createGlossaryWithCsvFile(
+      GlossaryInfo info = await glossaries.createWithCsvFile(
           name: name,
           sourceLang: sourceLang,
           targetLang: targetLang,
@@ -91,62 +91,79 @@ void main() {
     });
 
     test('get glossary', () async {
-      List<GlossaryInfo> infos = await translator.listGlossaries();
+      List<GlossaryInfo> infos = await glossaries.list();
       expect(infos, isNotEmpty);
-      expect(translator.getGlossary(infos.first.glossaryId),
+      expect(glossaries.get(infos.first.glossaryId),
           completion(equals(infos.first)));
     });
 
     test('get glossary with invalid id', () {
-      expect(translator.getGlossary(''), throwsA(isA<AssertionError>()));
-      expect(translator.getGlossary('invalid id'), throwsA(isA<DeepLError>()));
-      expect(translator.getGlossary('96ab91fd-e715-41a1-adeb-5d701f84a483'),
+      expect(glossaries.get(''), throwsA(isA<AssertionError>()));
+      expect(glossaries.get('invalid id'), throwsA(isA<DeepLError>()));
+      expect(glossaries.get('96ab91fd-e715-41a1-adeb-5d701f84a483'),
           throwsA(isA<GlossaryNotFoundError>()));
     });
 
     test('get glossary entries', () async {
-      List<GlossaryInfo> infos = await translator.listGlossaries();
+      List<GlossaryInfo> infos = await glossaries.list();
       expect(infos, isNotEmpty);
-      expect(translator.getGlossaryEntries(glossaryId: infos.first.glossaryId),
+      expect(glossaries.getEntries(glossaryId: infos.first.glossaryId),
           completion(equals(entries)));
-      expect(translator.getGlossaryEntries(glossaryInfo: infos.first),
+      expect(glossaries.getEntries(glossaryInfo: infos.first),
           completion(equals(entries)));
     });
 
     test('get glossary entries with invalid params', () async {
-      List<GlossaryInfo> infos = await translator.listGlossaries();
+      List<GlossaryInfo> infos = await glossaries.list();
       expect(infos, isNotEmpty);
       expect(
-          translator.getGlossaryEntries(
+          glossaries.getEntries(
               glossaryId: infos.first.glossaryId, glossaryInfo: infos.first),
           throwsA(isA<AssertionError>()));
-      expect(translator.getGlossaryEntries(), throwsA(isA<AssertionError>()));
+      expect(glossaries.getEntries(), throwsA(isA<AssertionError>()));
     });
 
     test('get glossary entries with invalid id', () {
-      expect(translator.getGlossaryEntries(glossaryId: ''),
+      expect(glossaries.getEntries(glossaryId: ''),
           throwsA(isA<AssertionError>()));
     });
     test('delete glossary', () async {
-      List<GlossaryInfo> infos = await translator.listGlossaries();
-      expect(infos, isNotEmpty);
-      translator.deleteGlossary(glossaryId: infos.first.glossaryId);
-      translator.deleteGlossary(glossaryInfo: infos.first);
+      GlossaryInfo info = await glossaries.create(
+          name: "test 123",
+          sourceLang: sourceLang,
+          targetLang: targetLang,
+          entries: entries);
+      await glossaries.delete(glossaryId: info.glossaryId);
+      expect(glossaries.get(info.glossaryId),
+          throwsA(isA<GlossaryNotFoundError>()));
+      info = await glossaries.create(
+          name: "test 123",
+          sourceLang: "de",
+          targetLang: "en",
+          entries: entries);
+      await glossaries.delete(glossaryInfo: info);
+      expect(glossaries.get(info.glossaryId),
+          throwsA(isA<GlossaryNotFoundError>()));
     });
 
     test('delete glossary with invalid params', () async {
-      List<GlossaryInfo> infos = await translator.listGlossaries();
-      expect(infos, isNotEmpty);
       expect(
-          translator.deleteGlossary(
-              glossaryId: infos.first.glossaryId, glossaryInfo: infos.first),
+          glossaries.delete(
+              glossaryId: "123",
+              glossaryInfo: GlossaryInfo(
+                  glossaryId: "123",
+                  name: "test 123",
+                  ready: true,
+                  sourceLang: "de",
+                  targetLang: "en",
+                  creationTime: "2021-10-10T10:10:10Z",
+                  entryCount: 1)),
           throwsA(isA<AssertionError>()));
-      expect(translator.deleteGlossary(), throwsA(isA<AssertionError>()));
+      expect(glossaries.delete(), throwsA(isA<AssertionError>()));
     });
 
     test('delete glossary with invalid id', () {
-      expect(translator.deleteGlossary(glossaryId: ''),
-          throwsA(isA<AssertionError>()));
+      expect(glossaries.delete(glossaryId: ''), throwsA(isA<AssertionError>()));
     });
   });
 }

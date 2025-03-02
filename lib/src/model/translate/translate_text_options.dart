@@ -26,13 +26,13 @@ class TranslateTextOptions {
   bool? outlineDetection;
 
   /// List of XML tags that should be used to split text into sentences.
-  String? splittingTags;
+  List<String>? splittingTags;
 
   /// List of XML tags that should not be used to split text into sentences.
-  String? nonSplittingTags;
+  List<String>? nonSplittingTags;
 
   /// List of XML tags containing content that should not be translated.
-  String? ignoreTags;
+  List<String>? ignoreTags;
 
   /// Provides additional context to improve translation accuracy.
   /// This text is not translated itself, but helps the engine

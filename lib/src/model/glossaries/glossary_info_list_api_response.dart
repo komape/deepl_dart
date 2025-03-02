@@ -1,4 +1,4 @@
-import 'package:deepl_dart/src/model/glossary_info.dart';
+import 'package:deepl_dart/src/model/glossaries/glossary_info.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'glossary_info_list_api_response.g.dart';

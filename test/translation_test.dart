@@ -9,11 +9,11 @@ import 'package:test/test.dart';
 void main() {
   group('Translator Tests', () {
     String? authKey = Platform.environment['DEEPL_AUTH_KEY'];
-    late Translator translator;
+    late Translate translator;
 
     setUpAll(() {
       assert(authKey != null, 'found no authentication key');
-      translator = Translator(authKey: authKey!);
+      translator = DeepL(authKey: authKey!).translate;
     });
 
     group('Translate Text', () {
@@ -23,14 +23,14 @@ void main() {
 
       test('translate text', () {
         expect(
-            translator.translateTextSingular(sampleTextEn, 'de'),
+            translator.translateText(sampleTextEn, 'de'),
             completion(equals(
                 TextResult(text: sampleTextDe, detectedSourceLanguage: 'en'))));
       });
 
       test('translate text with utf-8 check', () {
         expect(
-            translator.translateTextSingular('The force be with you.', 'pl'),
+            translator.translateText('The force be with you.', 'pl'),
             completion(equals(TextResult(
                 text: 'Siła niech będzie z tobą.',
                 detectedSourceLanguage: 'en'))));
@@ -47,40 +47,28 @@ void main() {
 
       test('test accept language codes', () {
         expect(
-            translator.translateTextSingular(sampleTextEn, 'de',
-                sourceLang: 'en'),
+            translator.translateText(sampleTextEn, 'de', sourceLang: 'en'),
             completion(equals(
                 TextResult(text: sampleTextDe, detectedSourceLanguage: 'en'))));
       });
 
       test('test regional language codes', () {
         expect(
-            translator.translateTextSingular(sampleTextDe, 'en-us',
-                sourceLang: 'de'),
+            translator.translateText(sampleTextDe, 'en-us', sourceLang: 'de'),
             completion(equals(TextResult(
                 text: 'Hello world', detectedSourceLanguage: 'de'))));
       });
 
-      // TODO pause due to bug in DeepL API
-      // test('test deprecated language codes', () {
-      //   expect(translator.translateTextSingular(sampleTextDe, 'en-us'),
-      //       throwsA(isA<AssertionError>()));
-      //   expect(translator.translateTextSingular(sampleTextDe, 'pt'),
-      //       throwsA(isA<AssertionError>()));
-      // });
-
       test('test invalid language codes', () {
-        expect(
-            translator.translateTextSingular(sampleTextEn, 'de',
-                sourceLang: 'xx'),
+        expect(translator.translateText(sampleTextEn, 'de', sourceLang: 'xx'),
             throwsA(isA<DeepLError>()));
-        expect(translator.translateTextSingular(sampleTextEn, 'xx'),
+        expect(translator.translateText(sampleTextEn, 'xx'),
             throwsA(isA<DeepLError>()));
       });
 
       test('test empty text', () {
-        expect(translator.translateTextSingular('', 'de'),
-            throwsA(isA<AssertionError>()));
+        expect(
+            translator.translateText('', 'de'), throwsA(isA<AssertionError>()));
         expect(translator.translateTextList([''], 'de'),
             throwsA(isA<AssertionError>()));
         expect(translator.translateTextList([], 'de'),
@@ -99,25 +87,25 @@ void main() {
         TextResult informalResult =
             TextResult(text: informal, detectedSourceLanguage: 'EN');
 
-        expect(translator.translateTextSingular(input, 'de'),
+        expect(translator.translateText(input, 'de'),
             completion(equals(formalResult)));
         expect(
-            translator.translateTextSingular(input, 'de',
+            translator.translateText(input, 'de',
                 options: TranslateTextOptions(formality: 'less')),
             completion(equals(informalResult)));
         expect(
-            translator.translateTextSingular(input, 'de',
+            translator.translateText(input, 'de',
                 options: TranslateTextOptions(formality: 'default')),
             completion(equals(formalResult)));
         expect(
-            translator.translateTextSingular(input, 'de',
+            translator.translateText(input, 'de',
                 options: TranslateTextOptions(formality: 'more')),
             completion(equals(formalResult)));
       });
 
       test('translate text with invalid formality', () {
         expect(
-            translator.translateTextSingular(sampleTextEn, 'de',
+            translator.translateText(sampleTextEn, 'de',
                 options: TranslateTextOptions(formality: 'invalid')),
             throwsA(isA<DeepLError>()));
       });
@@ -130,23 +118,23 @@ void main() {
             'Das ist nicht\nmeine Schuld. Es ist ihre Schuld!';
 
         expect(
-            translator.translateTextSingular(input, 'de',
+            translator.translateText(input, 'de',
                 options: TranslateTextOptions(splitSentences: 'off')),
             completion(equals(
                 TextResult(text: oneSentence, detectedSourceLanguage: 'en'))));
         expect(
-            translator.translateTextSingular(input, 'de',
+            translator.translateText(input, 'de',
                 options: TranslateTextOptions(splitSentences: 'on')),
             completion(equals(TextResult(
                 text: twoSentencesWithLineBreak,
                 detectedSourceLanguage: 'en'))));
         expect(
-            translator.translateTextSingular(input, 'de',
+            translator.translateText(input, 'de',
                 options: TranslateTextOptions(splitSentences: 'nonewlines')),
             completion(equals(
                 TextResult(text: twoSentences, detectedSourceLanguage: 'en'))));
         expect(
-            translator.translateTextSingular(input, 'de',
+            translator.translateText(input, 'de',
                 options: TranslateTextOptions(splitSentences: 'default')),
             completion(equals(TextResult(
                 text: twoSentencesWithLineBreak,
@@ -155,22 +143,23 @@ void main() {
 
       test('translate text with invalid split sentences', () {
         expect(
-            translator.translateTextSingular(sampleTextEn, 'de',
+            translator.translateText(sampleTextEn, 'de',
                 options: TranslateTextOptions(splitSentences: 'invalid')),
             throwsA(isA<DeepLError>()));
       });
 
       test('translate text with glossary id but no source lang', () {
         expect(
-            translator.translateTextSingular(sampleTextEn, 'de',
+            translator.translateText(sampleTextEn, 'de',
                 options: TranslateTextOptions(glossaryId: 'foo')),
             throwsA(isA<DeepLError>()));
       });
 
       test('translate text with own server url', () {
-        Translator translator =
-            Translator(authKey: authKey!, serverUrl: 'https://example.org');
-        expect(translator.translateTextSingular(sampleTextEn, 'de'),
+        Translate translator =
+            DeepL(authKey: authKey!, serverUrl: 'https://example.org')
+                .translate;
+        expect(translator.translateText(sampleTextEn, 'de'),
             throwsA(isA<DeepLError>()));
       });
     });
@@ -259,7 +248,7 @@ void main() {
         String text = 'The mouse is fast.';
         String context = 'This text is about computer hardware.';
 
-        var result = await translator.translateTextSingular(text, 'de',
+        var result = await translator.translateText(text, 'de',
             options: TranslateTextOptions(context: context));
 
         expect(result.text.toLowerCase(), contains('maus'));
@@ -272,10 +261,10 @@ void main() {
         String riverContext =
             'This text is about a river and its surroundings.';
 
-        var financialResult = await translator.translateTextSingular(text, 'de',
+        var financialResult = await translator.translateText(text, 'de',
             options: TranslateTextOptions(context: financialContext));
 
-        var riverResult = await translator.translateTextSingular(text, 'de',
+        var riverResult = await translator.translateText(text, 'de',
             options: TranslateTextOptions(context: riverContext));
 
         expect(financialResult.text.toLowerCase(), contains('bank'));
@@ -289,10 +278,10 @@ void main() {
         String maleContext = 'The doctor is a man named John.';
         String femaleContext = 'The doctor is a woman named Sarah.';
 
-        var maleResult = await translator.translateTextSingular(text, 'de',
+        var maleResult = await translator.translateText(text, 'de',
             options: TranslateTextOptions(context: maleContext));
 
-        var femaleResult = await translator.translateTextSingular(text, 'de',
+        var femaleResult = await translator.translateText(text, 'de',
             options: TranslateTextOptions(context: femaleContext));
 
         expect(maleResult.text.toLowerCase(), contains('er'));
@@ -310,7 +299,7 @@ void main() {
           The development team is working on fixing these issues.
         ''';
 
-        var result = await translator.translateTextSingular(text, 'de',
+        var result = await translator.translateText(text, 'de',
             options: TranslateTextOptions(context: context));
 
         expect(result.text.toLowerCase(),
@@ -322,23 +311,12 @@ void main() {
         String text = 'Hello, world!';
         String context = '';
 
-        var result = await translator.translateTextSingular(text, 'de',
+        var result = await translator.translateText(text, 'de',
             options: TranslateTextOptions(context: context));
 
         expect(result.text, equals('Hallo, Welt!'));
         expect(result.detectedSourceLanguage, equals('EN'));
       });
-    });
-  });
-
-  group('Auth Key Check', () {
-    test('create translator with empty auth key', () {
-      expect(() => Translator(authKey: ''), throwsA(isA<AssertionError>()));
-    });
-
-    test('free auth key check', () {
-      expect(Translator.isFreeAccountAuthKey('0000:fx'), equals(true));
-      expect(Translator.isFreeAccountAuthKey('0000'), equals(false));
     });
   });
 }

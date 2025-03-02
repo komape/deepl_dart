@@ -4,8 +4,8 @@ import 'package:deepl_dart/deepl_dart.dart';
 
 void main() async {
   // Construct Translator
-  Translator translator = Translator(authKey: '<your_auth_key>');
-  Translator(
+  DeepL deepl = DeepL(authKey: '<your_auth_key>');
+  DeepL(
     authKey: '<foo>',
     headers: {'my header key': 'my header value'},
     serverUrl: 'alternative deepl api server url',
@@ -14,20 +14,14 @@ void main() async {
 
   // ============ TRANSLATE ====================================================
 
-  // Get available languages
-  List<Language> sourceLangs = await translator.getSourceLanguages();
-  print(sourceLangs);
-  List<Language> targetLangs = await translator.getTargetLanguages();
-  print(targetLangs);
-
   // Translate single text
-  TextResult result =
-      await translator.translateTextSingular('Hello World', 'de');
+  TextResult result = await deepl.translate.translateText('Hello World', 'de');
   print(result);
 
   // Translate single text with options
   TextResult resultWithOptions =
-      await translator.translateTextSingular('Hello World', 'de',
+      await deepl.translate.translateText('Hello World', 'de',
+          sourceLang: 'en',
           options: TranslateTextOptions(
             splitSentences: "0",
             preserveFormatting: true,
@@ -35,32 +29,61 @@ void main() async {
             glossaryId: "123",
             tagHandling: "xml",
             outlineDetection: true,
-            nonSplittingTags: "tag1,tag2",
-            splittingTags: "tag3,tag4",
-            ignoreTags: "tag5,tag6",
+            nonSplittingTags: ["tag1", "tag2"],
+            splittingTags: ["tag3", "tag4"],
+            ignoreTags: ["tag5", "tag6"],
             context: "This is my context.",
           ));
   print(resultWithOptions);
 
   // Translate multiple texts
-  List<TextResult> results =
-      await translator.translateTextList(['Hello World', 'Hola Mundo'], 'de');
+  List<TextResult> results = await deepl.translate
+      .translateTextList(['Hello World', 'Hola Mundo'], 'de');
   print(results);
 
   // Translate document
-  DocumentStatus status = await translator.translateDocument(
+  DocumentStatus status = await deepl.translate.translateDocument(
       File('<input_file_path>'), File('<output_file_path>'), 'de');
   print(status);
+
+  // ============ WRITE ========================================================
+
+  // Rephrase text
+  TextRephraseResult rephraseResult =
+      await deepl.write.rephraseText('This is a sample sentence to improve.');
+  print(rephraseResult);
+
+  // Rephrase multiple texts
+  List<TextRephraseResult> rephraseResults =
+      await deepl.write.rephraseTextList([
+    'This is a sample sentence to improve.',
+    'This is another sample sentence to improve.',
+  ]);
+  print(rephraseResults);
+
+  // Rephrase text with writing style
+  TextRephraseResult rephraseResultWithStyle = await deepl.write.rephraseText(
+    'This is a sample sentence to improve.',
+    writingStyle: WritingStyle.academic,
+  );
+  print(rephraseResultWithStyle);
+
+  // Rephrase text with tone
+  TextRephraseResult rephraseResultWithTone = await deepl.write.rephraseText(
+    'This is a sample sentence to improve.',
+    tone: Tone.diplomatic,
+  );
+  print(rephraseResultWithTone);
 
   // ============ GLOSSARY =====================================================
 
   // Get supported language pairs for glossaries
   List<GlossaryLanguagePair> langPairs =
-      await translator.getGlossaryLanguagePairs();
+      await deepl.glossaries.getLanguagePairs();
   print(langPairs);
 
   // Create glossary
-  GlossaryInfo glossaryInfo = await translator.createGlossary(
+  GlossaryInfo glossaryInfo = await deepl.glossaries.create(
     name: 'my glossary',
     sourceLang: 'en',
     targetLang: 'de',
@@ -72,7 +95,7 @@ void main() async {
   print(glossaryInfo);
 
   // Create glossary with CSV file
-  GlossaryInfo csvGlossaryInfo = await translator.createGlossaryWithCsvFile(
+  GlossaryInfo csvGlossaryInfo = await deepl.glossaries.createWithCsvFile(
     name: 'my glossary',
     sourceLang: 'en',
     targetLang: 'de',
@@ -81,24 +104,32 @@ void main() async {
   print(csvGlossaryInfo);
 
   // List glossaries
-  List<GlossaryInfo> glossaryList = await translator.listGlossaries();
+  List<GlossaryInfo> glossaryList = await deepl.glossaries.list();
   print(glossaryList);
 
   // Get glossary info
-  glossaryInfo = await translator.getGlossary(glossaryInfo.glossaryId);
+  glossaryInfo = await deepl.glossaries.get(glossaryInfo.glossaryId);
   print(glossaryInfo);
 
   // Get glossary entries
   GlossaryEntries glossaryEntries =
-      await translator.getGlossaryEntries(glossaryId: glossaryInfo.glossaryId);
+      await deepl.glossaries.getEntries(glossaryId: glossaryInfo.glossaryId);
   print(glossaryEntries);
 
   // Delete glossary
-  await translator.deleteGlossary(glossaryId: glossaryInfo.glossaryId);
+  await deepl.glossaries.delete(glossaryId: glossaryInfo.glossaryId);
+
+  // ============ LANGUAGES ====================================================
+
+  // Get available languages
+  List<Language> sourceLangs = await deepl.languages.getSources();
+  print(sourceLangs);
+  List<Language> targetLangs = await deepl.languages.getTargets();
+  print(targetLangs);
 
   // ============ USAGE ========================================================
 
   // Get usage
-  Usage usage = await translator.getUsage();
+  Usage usage = await deepl.getUsage();
   print(usage);
 }
