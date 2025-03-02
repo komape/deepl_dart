@@ -3,7 +3,10 @@
 ## 2.0.0
 
 - #27 Add writer functionality to rephrase and improve text
-- Breaking changes: The `Translator` class has been restructured into modules grouped in the `DeepL` class. See the README and the deprecation notes in the codeon on how to update. 
+
+### Breaking changes
+
+- The `Translator` class has been restructured into modules grouped in the `DeepL` class. See the README and the deprecation notes in the code on on how to update. 
 
 ## 1.5.0
 

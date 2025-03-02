@@ -3,7 +3,7 @@ description: Dart library for the DeepL language translation API. Pure Dart. Ins
 version: 2.0.0
 homepage: https://github.com/komape/deepl_dart
 repository: https://github.com/komape/deepl_dart
-issue_tracker: https://github.com/komape/deepl_dart/issues
+issue_tracker: https://github.com/komape/deepl_dart/issues/
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
