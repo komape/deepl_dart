@@ -1,3 +1,6 @@
+import 'formality.dart';
+import 'model_type.dart';
+
 /// Options that can be specified when translating text.
 class TranslateTextOptions {
   /// Specifies how input translation text should be split into sentences.
@@ -14,7 +17,10 @@ class TranslateTextOptions {
   bool? preserveFormatting;
 
   /// Controls whether translations should lean toward formal or informal language.
-  String? formality;
+  Formality? formality;
+
+  /// Specifies which DeepL model should be used for translation.
+  ModelType? modelType;
 
   /// Specifies the ID of a glossary to use with translation.
   String? glossaryId;
@@ -43,6 +49,7 @@ class TranslateTextOptions {
     this.splitSentences,
     this.preserveFormatting,
     this.formality,
+    this.modelType,
     this.glossaryId,
     this.tagHandling,
     this.outlineDetection,

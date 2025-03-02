@@ -17,7 +17,10 @@ Map<String, dynamic> _$TextTranslationRequestToJson(
         'split_sentences': value,
       if (instance.preserveFormatting case final value?)
         'preserve_formatting': value,
-      if (instance.formality case final value?) 'formality': value,
+      if (_$FormalityEnumMap[instance.formality] case final value?)
+        'formality': value,
+      if (_$ModelTypeEnumMap[instance.modelType] case final value?)
+        'model_type': value,
       if (instance.glossaryId case final value?) 'glossary_id': value,
       if (instance.tagHandling case final value?) 'tag_handling': value,
       if (instance.outlineDetection case final value?)
@@ -28,3 +31,16 @@ Map<String, dynamic> _$TextTranslationRequestToJson(
       if (instance.ignoreTags case final value?) 'ignore_tags': value,
       if (instance.context case final value?) 'context': value,
     };
+
+const _$FormalityEnumMap = {
+  Formality.more: 'more',
+  Formality.less: 'less',
+  Formality.preferMore: 'prefer_more',
+  Formality.preferLess: 'prefer_less',
+};
+
+const _$ModelTypeEnumMap = {
+  ModelType.qualityOptimized: 'quality_optimized',
+  ModelType.preferQualityOptimized: 'prefer_quality_optimized',
+  ModelType.latencyOptimized: 'latency_optimized',
+};

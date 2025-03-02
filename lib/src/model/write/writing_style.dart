@@ -17,7 +17,6 @@ enum WritingStyle {
   business,
   academic,
   casual,
-  defaultStyle,
   preferSimple,
   preferBusiness,
   preferAcademic,

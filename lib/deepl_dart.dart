@@ -12,6 +12,8 @@ export 'src/model/translate/document_handle.dart';
 export 'src/model/translate/document_status.dart';
 export 'src/model/translate/document_translate_options.dart';
 export 'src/model/translate/document_translation_status.dart';
+export 'src/model/translate/formality.dart';
+export 'src/model/translate/model_type.dart';
 export 'src/model/translate/text_result.dart';
 export 'src/model/translate/translate_text_options.dart';
 export 'src/model/usage.dart';

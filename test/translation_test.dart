@@ -91,23 +91,56 @@ void main() {
             completion(equals(formalResult)));
         expect(
             translator.translateText(input, 'de',
-                options: TranslateTextOptions(formality: 'less')),
+                options: TranslateTextOptions(formality: Formality.less)),
             completion(equals(informalResult)));
         expect(
             translator.translateText(input, 'de',
-                options: TranslateTextOptions(formality: 'default')),
+                options: TranslateTextOptions(formality: null)),
             completion(equals(formalResult)));
         expect(
             translator.translateText(input, 'de',
-                options: TranslateTextOptions(formality: 'more')),
+                options: TranslateTextOptions(formality: Formality.more)),
             completion(equals(formalResult)));
       });
 
-      test('translate text with invalid formality', () {
+      test('translate text with modelType', () {
+        String input = 'How are you?';
+        String output = 'Wie geht es Ihnen?';
+
+        TextResult simpleResult = TextResult(
+            text: output, detectedSourceLanguage: 'EN', modelTypeUsed: null);
+        TextResult qualityResult = TextResult(
+            text: output,
+            detectedSourceLanguage: 'EN',
+            modelTypeUsed: ModelType.qualityOptimized);
+        TextResult latencyResult = TextResult(
+            text: output,
+            detectedSourceLanguage: 'EN',
+            modelTypeUsed: ModelType.latencyOptimized);
+        TextResult preferQualityResult = TextResult(
+            text: output,
+            detectedSourceLanguage: 'EN',
+            modelTypeUsed: ModelType.qualityOptimized);
+
         expect(
-            translator.translateText(sampleTextEn, 'de',
-                options: TranslateTextOptions(formality: 'invalid')),
-            throwsA(isA<DeepLError>()));
+            translator.translateText(input, 'de',
+                options: TranslateTextOptions(modelType: null)),
+            completion(equals(simpleResult)));
+        expect(
+            translator.translateText(input, 'de',
+                options: TranslateTextOptions(
+                    modelType: ModelType.qualityOptimized)),
+            completion(equals(qualityResult)));
+        expect(
+            translator.translateText(input, 'de',
+                options: TranslateTextOptions(
+                    modelType: ModelType.latencyOptimized)),
+            completion(equals(latencyResult)));
+        expect(
+            translator.translateText(input, 'de',
+                options: TranslateTextOptions(
+                    modelType: ModelType.preferQualityOptimized)),
+            completion(equals(preferQualityResult)));
       });
 
       test('translate text with split sentences', () async {

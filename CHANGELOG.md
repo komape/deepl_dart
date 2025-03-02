@@ -3,10 +3,12 @@
 ## 2.0.0
 
 - #27 Add writer functionality to rephrase and improve text
+- Add `modelType` parameter to translation requests, see `ModelType` for more info
 
 ### Breaking changes
 
 - The `Translator` class has been restructured into modules grouped in the `DeepL` class. See the README and the deprecation notes in the code on on how to update. 
+- The `formality` parameter for text translation requests has been converted from a `String` to the `Formality` enum
 
 ## 1.5.0
 

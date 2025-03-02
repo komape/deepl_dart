@@ -16,7 +16,8 @@ class TextTranslationRequest {
   @JsonKey(toJson: _splitSentencesToJson)
   final String? splitSentences;
   final bool? preserveFormatting;
-  final String? formality;
+  final Formality? formality;
+  final ModelType? modelType;
   final String? glossaryId;
   final String? tagHandling;
   final bool? outlineDetection;
@@ -32,6 +33,7 @@ class TextTranslationRequest {
     this.splitSentences,
     this.preserveFormatting,
     this.formality,
+    this.modelType,
     this.glossaryId,
     this.tagHandling,
     this.outlineDetection,
@@ -49,6 +51,7 @@ class TextTranslationRequest {
   })  : splitSentences = options?.splitSentences,
         preserveFormatting = options?.preserveFormatting,
         formality = options?.formality,
+        modelType = options?.modelType,
         glossaryId = options?.glossaryId,
         tagHandling = options?.tagHandling,
         outlineDetection = options?.outlineDetection,

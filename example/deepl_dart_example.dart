@@ -25,7 +25,8 @@ void main() async {
           options: TranslateTextOptions(
             splitSentences: "0",
             preserveFormatting: true,
-            formality: "more",
+            formality: Formality.more,
+            modelType: ModelType.qualityOptimized,
             glossaryId: "123",
             tagHandling: "xml",
             outlineDetection: true,

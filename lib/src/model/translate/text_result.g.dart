@@ -9,4 +9,12 @@ part of 'text_result.dart';
 TextResult _$TextResultFromJson(Map<String, dynamic> json) => TextResult(
       text: json['text'] as String,
       detectedSourceLanguage: json['detected_source_language'] as String,
+      modelTypeUsed:
+          $enumDecodeNullable(_$ModelTypeEnumMap, json['model_type_used']),
     );
+
+const _$ModelTypeEnumMap = {
+  ModelType.qualityOptimized: 'quality_optimized',
+  ModelType.preferQualityOptimized: 'prefer_quality_optimized',
+  ModelType.latencyOptimized: 'latency_optimized',
+};

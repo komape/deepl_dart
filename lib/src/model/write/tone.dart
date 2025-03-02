@@ -17,7 +17,6 @@ enum Tone {
   friendly,
   confident,
   diplomatic,
-  defaultTone,
   preferEnthusiastic,
   preferFriendly,
   preferConfident,
