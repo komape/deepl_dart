@@ -50,13 +50,29 @@ class Language {
   String toString() =>
       'Language[languageCode: $languageCode, name: $name, isSourceLanguage: $isTranslationSourceLanguage, isTargetLanguage: $isTranslationTargetLanguage, supportsFormality: $supportsFormality]';
 
+  /// Get Language by language code.
+  ///
+  /// [code] Language code to look for.
+  /// [includeBeta] Whether to include beta languages in the search.
+  /// Default is false.
+  ///
+  /// Returns Language matching the given language code.
+  static Language fromLanguageCode(final String code,
+          {final bool includeBeta = false}) =>
+      ALL.firstWhere(
+        (lang) =>
+            lang.languageCode.toLowerCase() == code.toLowerCase() &&
+            (includeBeta || !lang.isBetaLanguage),
+        orElse: () => throw ArgumentError('Unsupported language code: $code'),
+      );
+
   /// Get the list of source languages.
   ///
   /// [includeBeta] Whether to include beta languages in the returned list.
-  /// Default is true.
+  /// Default is false.
   ///
   /// Returns List of Languages that can be used as source languages.
-  static getSourceLanguages({final bool includeBeta = true}) => ALL
+  static getSourceLanguages({final bool includeBeta = false}) => ALL
       .where((lang) =>
           lang.isTranslationSourceLanguage &&
           (includeBeta || !lang.isBetaLanguage))
@@ -65,10 +81,10 @@ class Language {
   /// Get the list of target languages.
   ///
   /// [includeBeta] Whether to include beta languages in the returned list.
-  /// Default is true.
+  /// Default is false.
   ///
   /// Returns List of Languages that can be used as target languages.
-  static getTargetLanguages({final bool includeBeta = true}) => ALL
+  static getTargetLanguages({final bool includeBeta = false}) => ALL
       .where((lang) =>
           lang.isTranslationTargetLanguage &&
           (includeBeta || !lang.isBetaLanguage))
