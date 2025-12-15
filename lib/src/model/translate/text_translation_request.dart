@@ -13,36 +13,44 @@ class TextTranslationRequest {
   final List<String> text;
   final String? sourceLang;
   final String targetLang;
+  final String? context;
+  final bool? showBilledCharacters;
   @JsonKey(toJson: _splitSentencesToJson)
   final String? splitSentences;
-  final bool? showBilledCharacters;
   final bool? preserveFormatting;
   final Formality? formality;
   final ModelType? modelType;
   final String? glossaryId;
+  final String? styleId;
+  final List<String>? customInstructions;
   final String? tagHandling;
+  final String? tagHandlingVersion;
   final bool? outlineDetection;
+  final bool? enableBetaLanguages;
   final List<String>? splittingTags;
   final List<String>? nonSplittingTags;
   final List<String>? ignoreTags;
-  final String? context;
 
   TextTranslationRequest({
     required this.text,
     this.sourceLang,
     required this.targetLang,
-    this.splitSentences,
+    this.context,
     this.showBilledCharacters,
+    this.splitSentences,
     this.preserveFormatting,
     this.formality,
     this.modelType,
     this.glossaryId,
+    this.styleId,
+    this.customInstructions,
     this.tagHandling,
+    this.tagHandlingVersion,
     this.outlineDetection,
+    this.enableBetaLanguages,
     this.splittingTags,
     this.nonSplittingTags,
     this.ignoreTags,
-    this.context,
   });
 
   TextTranslationRequest.fromOptions({
@@ -50,18 +58,22 @@ class TextTranslationRequest {
     this.sourceLang,
     required this.targetLang,
     TranslateTextOptions? options,
-  })  : splitSentences = options?.splitSentences,
+  })  : context = null,
         showBilledCharacters = options?.showBilledCharacters,
+        splitSentences = options?.splitSentences,
         preserveFormatting = options?.preserveFormatting,
         formality = options?.formality,
         modelType = options?.modelType,
         glossaryId = options?.glossaryId,
+        styleId = options?.styleId,
+        customInstructions = options?.customInstructions,
         tagHandling = options?.tagHandling,
+        tagHandlingVersion = options?.tagHandlingVersion,
         outlineDetection = options?.outlineDetection,
+        enableBetaLanguages = options?.enableBetaLanguages,
         splittingTags = options?.splittingTags,
         nonSplittingTags = options?.nonSplittingTags,
-        ignoreTags = options?.ignoreTags,
-        context = options?.context;
+        ignoreTags = options?.ignoreTags;
 
   String toJson() => jsonEncode(_$TextTranslationRequestToJson(this));
 
