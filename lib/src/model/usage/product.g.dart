@@ -7,10 +7,11 @@ part of 'product.dart';
 // **************************************************************************
 
 Product _$ProductFromJson(Map<String, dynamic> json) => Product(
-      productType: json['product_type'] as String,
-      billingUnit: $enumDecode(_$BillingUnitEnumMap, json['billing_unit']),
-      apiKeyUnitCount: (json['api_key_unit_count'] as num).toInt(),
-      accountUnitCount: (json['account_unit_count'] as num).toInt(),
+      productType: json['product_type'] as String?,
+      billingUnit:
+          $enumDecodeNullable(_$BillingUnitEnumMap, json['billing_unit']),
+      apiKeyUnitCount: (json['api_key_unit_count'] as num?)?.toInt(),
+      accountUnitCount: (json['account_unit_count'] as num?)?.toInt(),
     );
 
 const _$BillingUnitEnumMap = {
