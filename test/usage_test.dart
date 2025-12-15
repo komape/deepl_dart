@@ -14,7 +14,8 @@ void main() {
     });
 
     test('get usage', () async {
-      Usage usage = await deepl.getUsage();
+      final Usage usage = await deepl.getUsage();
+      print(usage);
       expect(usage.characterCount <= usage.characterLimit, isTrue);
       expect(usage.anyLimitReached(), isFalse);
     });

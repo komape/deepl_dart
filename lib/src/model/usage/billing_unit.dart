@@ -1,0 +1,4 @@
+enum BillingUnit {
+  characters,
+  milliseconds,
+}
