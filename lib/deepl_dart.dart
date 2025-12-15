@@ -1,7 +1,6 @@
 library deepl_dart;
 
 export 'src/deepl.dart';
-export 'src/translator.dart';
 
 export 'src/model/errors.dart';
 export 'src/model/glossaries/glossary_entries.dart';

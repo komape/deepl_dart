@@ -75,8 +75,8 @@ class DeepL {
   ///
   /// Fulfills with [Usage] object on success.
   Future<Usage> getUsage() async {
-    Uri uri = _buildUri(_config._serverUrl, '/v2/usage');
-    Response response =
+    final Uri uri = _buildUri(_config._serverUrl, '/v2/usage');
+    final Response response =
         await _config._httpClient.get(uri, headers: _config._headers);
     await _checkStatusCode(response.statusCode, response.body,
         reasonPhrase: response.reasonPhrase);
@@ -120,33 +120,6 @@ class Translate {
 
   // ============ TEXT TRANSLATION =============================================
 
-  /// DEPRECATED: Use [translateText] instead.
-  ///
-  /// Translates specified text string into the target language.
-  ///
-  /// Takes [text] to be translated.
-  ///
-  /// Takes [sourceLang] as language of the text to be translated. If omitted,
-  /// the API will attempt to detect the language of the text and translate it.
-  ///
-  /// Takes [targetLang] as language into which the text should be translated.
-  ///
-  /// [options] optional [TranslateTextOptions] object containing additional
-  /// options controlling translation.
-  ///
-  /// Fulfills with a [TextResult] object; use the `TextResult.text` property to
-  /// access the translated text.
-  @Deprecated('Use [translateText] instead')
-  Future<TextResult> translateTextSingular(
-    String text,
-    String targetLang, {
-    String? sourceLang,
-    TranslateTextOptions? options,
-  }) async {
-    return translateText(text, targetLang,
-        sourceLang: sourceLang, options: options);
-  }
-
   /// Translates specified text string into the target language.
   ///
   /// Takes [text] containing input text to translate.
@@ -162,13 +135,14 @@ class Translate {
   /// Fulfills with a [TextResult] object; use the `TextResult.text` property to
   /// access the translated text.
   Future<TextResult> translateText(
-    String text,
-    String targetLang, {
-    String? sourceLang,
-    TranslateTextOptions? options,
+    final String text,
+    final String targetLang, {
+    final String? sourceLang,
+    final TranslateTextOptions? options,
   }) async {
     assert(text.isNotEmpty, 'text parameter must be a non-empty string');
-    List<TextResult> textResults = await translateTextList([text], targetLang,
+    final List<TextResult> textResults = await translateTextList(
+        [text], targetLang,
         sourceLang: sourceLang, options: options);
     return textResults[0];
   }
@@ -189,10 +163,10 @@ class Translate {
   /// Fulfills with an array of TextResult objects corresponding to input texts;
   /// use the `TextResult.text` property to access the translated text.
   Future<List<TextResult>> translateTextList(
-    List<String> texts,
-    String targetLang, {
-    String? sourceLang,
-    TranslateTextOptions? options,
+    final List<String> texts,
+    final String targetLang, {
+    final String? sourceLang,
+    final TranslateTextOptions? options,
   }) async {
     assert(texts.isNotEmpty, 'texts parameter must not be a non-empty list');
     assert(texts.length <= 50,
@@ -204,7 +178,8 @@ class Translate {
         sourceLang: sourceLang,
         targetLang: targetLang,
         options: options);
-    Response translateRes = await _config._httpClient.post(
+
+    final Response translateRes = await _config._httpClient.post(
         _buildUri(_config._serverUrl, '/v2/translate'),
         headers: {..._config._headers}
           ..addAll({'Content-Type': 'application/json'}),
@@ -212,7 +187,7 @@ class Translate {
         encoding: Encoding.getByName('utf8'));
     await _checkStatusCode(translateRes.statusCode, translateRes.body,
         reasonPhrase: translateRes.reasonPhrase);
-    List<TextResult> textResults = TextResultResponse.fromJson(
+    final List<TextResult> textResults = TextResultResponse.fromJson(
             jsonDecode(utf8.decode(translateRes.bodyBytes)))
         .translations;
     return textResults;
@@ -247,17 +222,18 @@ class Translate {
   /// upload, translation or download. The [documentHandle] property of the
   /// error may be used to recover the document.
   Future<DocumentStatus> translateDocument(
-    File inputFile,
-    File outputFile,
-    String targetLang, {
-    String? sourceLang,
-    DocumentTranslateOptions? options,
+    final File inputFile,
+    final File outputFile,
+    final String targetLang, {
+    final String? sourceLang,
+    final DocumentTranslateOptions? options,
   }) async {
     // upload document
-    DocumentHandle documentHandle = await uploadDocument(inputFile, targetLang,
+    final DocumentHandle documentHandle = await uploadDocument(
+        inputFile, targetLang,
         sourceLang: sourceLang, options: options);
     // wait for translation to complete
-    DocumentTranslationStatus translationStatus =
+    final DocumentTranslationStatus translationStatus =
         await isDocumentTranslationComplete(documentHandle);
     // download document
     await downloadDocument(documentHandle, outputFile);
@@ -281,19 +257,19 @@ class Translate {
   /// Fulfills with [DocumentHandle] associated with the in-progress
   /// translation.
   Future<DocumentHandle> uploadDocument(
-    File inputFile,
-    String targetLang, {
-    String? sourceLang,
-    DocumentTranslateOptions? options,
+    final File inputFile,
+    final String targetLang, {
+    final String? sourceLang,
+    final DocumentTranslateOptions? options,
   }) async {
-    Uri uri = _buildUri(_config._serverUrl, '/v2/document');
+    final Uri uri = _buildUri(_config._serverUrl, '/v2/document');
     // build params for validity check
     _buildURLSearchParams(
         targetLang: targetLang,
         sourceLang: sourceLang,
         formality: options?.formality,
         glossaryId: options?.glossaryId);
-    http.MultipartRequest request = http.MultipartRequest('POST', uri)
+    final http.MultipartRequest request = http.MultipartRequest('POST', uri)
       ..files.add(await http.MultipartFile.fromPath('file', inputFile.path,
           filename: options?.filename))
       ..fields['target_lang'] = targetLang;
@@ -312,8 +288,9 @@ class Translate {
     _config._headers.forEach((k, v) {
       request.headers[k] = v;
     });
-    http.StreamedResponse response = await _config._httpClient.send(request);
-    String body = await response.stream.bytesToString();
+    final http.StreamedResponse response =
+        await _config._httpClient.send(request);
+    final String body = await response.stream.bytesToString();
     await _checkStatusCode(response.statusCode, body,
         reasonPhrase: response.reasonPhrase);
     return DocumentHandle.fromJson(jsonDecode(body));
@@ -325,11 +302,14 @@ class Translate {
   /// Takes document [handle] associated with document.
   ///
   /// Fulfills with a [DocumentStatus] giving the document translation status.
-  Future<DocumentStatus> getDocumentStatus(DocumentHandle handle) async {
-    Map<String, String> urlSearchParams = {'document_key': handle.documentKey};
-    Uri uri = _buildUri(_config._serverUrl, '/v2/document/${handle.documentId}',
+  Future<DocumentStatus> getDocumentStatus(final DocumentHandle handle) async {
+    final Map<String, String> urlSearchParams = {
+      'document_key': handle.documentKey
+    };
+    final Uri uri = _buildUri(
+        _config._serverUrl, '/v2/document/${handle.documentId}',
         urlSearchParams: urlSearchParams);
-    Response response =
+    final Response response =
         await _config._httpClient.get(uri, headers: _config._headers);
     await _checkStatusCode(response.statusCode, response.body,
         reasonPhrase: response.reasonPhrase, inDocumentDownload: true);
@@ -342,11 +322,12 @@ class Translate {
   /// Takes document [handle] associated with document.
   ///
   /// Takes [outputFile] to store file data.
-  Future<void> downloadDocument(DocumentHandle handle, File outputFile) async {
-    Uri uri = _buildUri(
+  Future<void> downloadDocument(
+      final DocumentHandle handle, final File outputFile) async {
+    final Uri uri = _buildUri(
         _config._serverUrl, '/v2/document/${handle.documentId}/result',
         urlSearchParams: {'document_key': handle.documentKey});
-    Response response =
+    final Response response =
         await _config._httpClient.get(uri, headers: _config._headers);
     await _checkStatusCode(response.statusCode, response.body,
         reasonPhrase: response.reasonPhrase, inDocumentDownload: true);
@@ -363,7 +344,7 @@ class Translate {
   /// document translation completes successfully, rejects if translation fails
   /// or a communication error occurs.
   Future<DocumentTranslationStatus> isDocumentTranslationComplete(
-      DocumentHandle handle) async {
+      final DocumentHandle handle) async {
     DocumentStatus status = await getDocumentStatus(handle);
     while (!status.done && status.ok) {
       double secs = (status.secondsRemaining ?? 0) / 2.0 + 1.0;
@@ -414,13 +395,13 @@ class Write {
   ///
   /// Fulfills with a [TextRephraseResult] object containing the rephrased text.
   Future<TextRephraseResult> rephraseText(
-    String text, {
-    String? targetLang,
-    WritingStyle? writingStyle,
-    Tone? tone,
+    final String text, {
+    final String? targetLang,
+    final WritingStyle? writingStyle,
+    final Tone? tone,
   }) async {
     assert(text.isNotEmpty, 'text parameter must be a non-empty string');
-    List<TextRephraseResult> textResults = await rephraseTextList([text],
+    final List<TextRephraseResult> textResults = await rephraseTextList([text],
         targetLang: targetLang, writingStyle: writingStyle, tone: tone);
     return textResults[0];
   }
@@ -452,10 +433,10 @@ class Write {
   ///
   /// Fulfills with a [TextRephraseResult] object containing the rephrased text.
   Future<List<TextRephraseResult>> rephraseTextList(
-    List<String> texts, {
-    String? targetLang,
-    WritingStyle? writingStyle,
-    Tone? tone,
+    final List<String> texts, {
+    final String? targetLang,
+    final WritingStyle? writingStyle,
+    final Tone? tone,
   }) async {
     assert(texts.isNotEmpty, 'texts parameter must not be a non-empty list');
     assert(texts.length <= 50,
@@ -469,7 +450,7 @@ class Write {
         targetLang: targetLang,
         writingStyle: writingStyle,
         tone: tone);
-    Response rephraseRes = await _config._httpClient.post(
+    final Response rephraseRes = await _config._httpClient.post(
         _buildUri(_config._serverUrl, '/v2/write/rephrase'),
         headers: {..._config._headers}
           ..addAll({'Content-Type': 'application/json'}),
@@ -477,7 +458,7 @@ class Write {
         encoding: Encoding.getByName('utf8'));
     await _checkStatusCode(rephraseRes.statusCode, rephraseRes.body,
         reasonPhrase: rephraseRes.reasonPhrase);
-    List<TextRephraseResult> textRephraseResults =
+    final List<TextRephraseResult> textRephraseResults =
         TextRephraseResponse.fromJson(
                 jsonDecode(utf8.decode(rephraseRes.bodyBytes)))
             .improvements;
@@ -499,23 +480,14 @@ class Glossaries {
 
   Glossaries._fromConfig(this._config);
 
-  /// DEPRECATED: Use [getLanguagePairs] instead.
-  ///
-  /// Queries language pairs supported for glossaries by DeepL API.
-  ///
-  /// Fulfills with an array of [GlossaryLanguagePair] objects containing
-  /// languages supported for glossaries.
-  @Deprecated('Use [getLanguagePairs] instead')
-  Future<List<GlossaryLanguagePair>> getGlossaryLanguagePairs() async =>
-      getLanguagePairs();
-
   /// Queries language pairs supported for glossaries by DeepL API.
   ///
   /// Fulfills with an array of [GlossaryLanguagePair] objects containing
   /// languages supported for glossaries.
   Future<List<GlossaryLanguagePair>> getLanguagePairs() async {
-    Uri uri = _buildUri(_config._serverUrl, '/v2/glossary-language-pairs');
-    Response response =
+    final Uri uri =
+        _buildUri(_config._serverUrl, '/v2/glossary-language-pairs');
+    final Response response =
         await _config._httpClient.get(uri, headers: _config._headers);
     await _checkStatusCode(response.statusCode, response.body,
         reasonPhrase: response.reasonPhrase);
@@ -523,33 +495,6 @@ class Glossaries {
             jsonDecode(response.body))
         .supportedLanguages;
   }
-
-  /// DEPRECATED: Use [create] instead.
-  ///
-  /// Creates a new glossary on DeepL server with given name, languages, and
-  /// entries.
-  ///
-  /// Takes user-defined [name] to assign to the glossary.
-  ///
-  /// Takes [sourceLang] language code of the glossary source terms.
-  ///
-  /// Takes [targetLang] language code of the glossary target terms.
-  ///
-  /// Takes [entries] as the source- & target-term pairs to add to the glossary.
-  ///
-  /// Fulfills with a [GlossaryInfo] containing details about the created
-  /// glossary.
-  @Deprecated('Use [create] instead')
-  Future<GlossaryInfo> createGlossary(
-          {required String name,
-          required String sourceLang,
-          required String targetLang,
-          required GlossaryEntries entries}) async =>
-      create(
-          name: name,
-          sourceLang: sourceLang,
-          targetLang: targetLang,
-          entries: entries);
 
   /// Creates a new glossary on DeepL server with given name, languages, and
   /// entries.
@@ -565,13 +510,13 @@ class Glossaries {
   /// Fulfills with a [GlossaryInfo] containing details about the created
   /// glossary.
   Future<GlossaryInfo> create(
-      {required String name,
-      required String sourceLang,
-      required String targetLang,
-      required GlossaryEntries entries}) async {
+      {required final String name,
+      required final String sourceLang,
+      required final String targetLang,
+      required final GlossaryEntries entries}) async {
     assert(name.isNotEmpty, 'glossary name must be a non-empty string');
     assert(entries.entries.isNotEmpty, 'glossary entries must not be empty');
-    String tsvContent = entries.toTsv();
+    final String tsvContent = entries.toTsv();
     return _create(
         name: name,
         sourceLang: sourceLang,
@@ -579,34 +524,6 @@ class Glossaries {
         entriesFormat: 'tsv',
         entries: tsvContent);
   }
-
-  /// DEPRECATED: Use [createWithCsvFile] instead.
-  ///
-  /// Creates a new glossary on DeepL server with given name, languages, and CSV
-  /// data.
-  ///
-  /// Takes user-defined [name] to assign to the glossary.
-  ///
-  /// Takes [sourceLang] language code of the glossary source terms.
-  ///
-  /// Takes [targetLang] language code of the glossary target terms.
-  ///
-  /// Takes [csvFile] containing the source- & target-term pairs as CSV to add
-  /// to the glossary.
-  ///
-  /// Fulfills with a [GlossaryInfo] containing details about the created
-  /// glossary.
-  @Deprecated('Use [createWithCsvFile] instead')
-  Future<GlossaryInfo> createGlossaryWithCsvFile(
-          {required String name,
-          required String sourceLang,
-          required String targetLang,
-          required File csvFile}) async =>
-      createWithCsvFile(
-          name: name,
-          sourceLang: sourceLang,
-          targetLang: targetLang,
-          csvFile: csvFile);
 
   /// Creates a new glossary on DeepL server with given name, languages, and CSV
   /// data.
@@ -623,13 +540,13 @@ class Glossaries {
   /// Fulfills with a [GlossaryInfo] containing details about the created
   /// glossary.
   Future<GlossaryInfo> createWithCsvFile(
-      {required String name,
-      required String sourceLang,
-      required String targetLang,
-      required File csvFile}) async {
+      {required final String name,
+      required final String sourceLang,
+      required final String targetLang,
+      required final File csvFile}) async {
     assert(name.isNotEmpty, 'glossary name must be a non-empty string');
     assert(await csvFile.exists(), 'csv file must exist');
-    String csvContent = await csvFile.readAsString();
+    final String csvContent = await csvFile.readAsString();
     assert(csvContent.isNotEmpty, 'csv file must be non empty');
     return _create(
         name: name,
@@ -640,22 +557,22 @@ class Glossaries {
   }
 
   Future<GlossaryInfo> _create(
-      {required String name,
+      {required final String name,
       required String sourceLang,
       required String targetLang,
-      required String entriesFormat,
-      required String entries}) async {
+      required final String entriesFormat,
+      required final String entries}) async {
     sourceLang = _nonRegionalLanguageCode(sourceLang);
     targetLang = _nonRegionalLanguageCode(targetLang);
-    Map<String, String> data = {
+    final Map<String, String> data = {
       'name': name,
       'source_lang': sourceLang,
       'target_lang': targetLang,
       'entries_format': entriesFormat,
       'entries': entries
     };
-    Uri uri = _buildUri(_config._serverUrl, '/v2/glossaries');
-    Response response = await _config._httpClient.post(uri,
+    final Uri uri = _buildUri(_config._serverUrl, '/v2/glossaries');
+    final Response response = await _config._httpClient.post(uri,
         headers: _config._headers,
         body: data,
         encoding: Encoding.getByName('application/x-www-form-urlencoded'));
@@ -663,16 +580,6 @@ class Glossaries {
         reasonPhrase: response.reasonPhrase, usingGlossary: true);
     return GlossaryInfo.fromJson(jsonDecode(response.body));
   }
-
-  /// DEPRECATED: Use [get] instead.
-  ///
-  /// Gets information about an existing glossary.
-  ///
-  /// Takes [glossaryId] of the glossary.
-  ///
-  /// Fulfills with a [GlossaryInfo] containing details about the glossary.
-  @Deprecated('Use [get] instead')
-  Future<GlossaryInfo> getGlossary(String glossaryId) async => get(glossaryId);
 
   /// Gets information about an existing glossary.
   ///
@@ -689,15 +596,6 @@ class Glossaries {
     return GlossaryInfo.fromJson(jsonDecode(response.body));
   }
 
-  /// DEPRECATED: Use [list] instead.
-  ///
-  /// Gets information about all existing glossaries.
-  ///
-  /// Fulfills with an array of [GlossaryInfo] containing details about all
-  /// existing glossaries.
-  @Deprecated('Use [list] instead')
-  Future<List<GlossaryInfo>> listGlossaries() async => list();
-
   /// Gets information about all existing glossaries.
   ///
   /// Fulfills with an array of [GlossaryInfo] containing details about all
@@ -712,19 +610,6 @@ class Glossaries {
         .glossaries;
   }
 
-  /// DEPRECATED: Use [getGlossaryEntries] instead.
-  ///
-  /// Retrieves the entries stored with the glossary with the given glossary ID
-  /// or GlossaryInfo.
-  ///
-  /// Takes [glossaryId] or [glossaryInfo] of glossary to retrieve entries of.
-  ///
-  /// Fulfills with [GlossaryEntries] holding the glossary entries.
-  @Deprecated('Use [getGlossaryEntries] instead')
-  Future<GlossaryEntries> getGlossaryEntries(
-          {String? glossaryId, GlossaryInfo? glossaryInfo}) async =>
-      getEntries(glossaryId: glossaryId, glossaryInfo: glossaryInfo);
-
   /// Retrieves the entries stored with the glossary with the given glossary ID
   /// or GlossaryInfo.
   ///
@@ -732,44 +617,35 @@ class Glossaries {
   ///
   /// Fulfills with [GlossaryEntries] holding the glossary entries.
   Future<GlossaryEntries> getEntries(
-      {String? glossaryId, GlossaryInfo? glossaryInfo}) async {
+      {String? glossaryId, final GlossaryInfo? glossaryInfo}) async {
     assert(
         (glossaryId != null && glossaryInfo == null) ||
             (glossaryId == null && glossaryInfo != null),
         'glossaryId and glossaryInfo are both not null or both null. only one is allowed');
     glossaryId = glossaryId ?? glossaryInfo!.glossaryId;
     assert(glossaryId.isNotEmpty, 'glossaryId must be a non-empty string');
-    Uri uri =
+    final Uri uri =
         _buildUri(_config._serverUrl, '/v2/glossaries/$glossaryId/entries');
-    Response response =
+    final Response response =
         await _config._httpClient.get(uri, headers: _config._headers);
     await _checkStatusCode(response.statusCode, response.body,
         reasonPhrase: response.reasonPhrase, usingGlossary: true);
     return GlossaryEntries.constructFromTsv(response.body);
   }
 
-  /// DEPRECATED: Use [delete] instead.
-  ///
   /// Deletes the glossary with the given glossary ID or GlossaryInfo.
   /// @param glossary Glossary ID or GlossaryInfo of glossary to be deleted.
   /// @return Fulfills with undefined when the glossary is deleted.
-  @Deprecated('Use [delete] instead')
-  Future<void> deleteGlossary(
-          {String? glossaryId, GlossaryInfo? glossaryInfo}) async =>
-      delete(glossaryId: glossaryId, glossaryInfo: glossaryInfo);
-
-  /// Deletes the glossary with the given glossary ID or GlossaryInfo.
-  /// @param glossary Glossary ID or GlossaryInfo of glossary to be deleted.
-  /// @return Fulfills with undefined when the glossary is deleted.
-  Future<void> delete({String? glossaryId, GlossaryInfo? glossaryInfo}) async {
+  Future<void> delete(
+      {String? glossaryId, final GlossaryInfo? glossaryInfo}) async {
     assert(
         (glossaryId != null && glossaryInfo == null) ||
             (glossaryId == null && glossaryInfo != null),
         'glossaryId and glossaryInfo are both not null or both null. only one is allowed');
     glossaryId = glossaryId ?? glossaryInfo!.glossaryId;
     assert(glossaryId.isNotEmpty, 'glossaryId must be a non-empty string');
-    Uri uri = _buildUri(_config._serverUrl, '/v2/glossaries/$glossaryId');
-    Response response =
+    final Uri uri = _buildUri(_config._serverUrl, '/v2/glossaries/$glossaryId');
+    final Response response =
         await _config._httpClient.delete(uri, headers: _config._headers);
     await _checkStatusCode(response.statusCode, response.body,
         reasonPhrase: response.reasonPhrase, usingGlossary: true);
@@ -795,14 +671,14 @@ class Languages {
   /// languages.
   Future<List<Language>> getTargets() async => _get('target');
 
-  Future<List<Language>> _get(String type) async {
-    Uri uri = _buildUri(_config._serverUrl, '/v2/languages',
+  Future<List<Language>> _get(final String type) async {
+    final Uri uri = _buildUri(_config._serverUrl, '/v2/languages',
         urlSearchParams: {'type': type});
-    Response response =
+    final Response response =
         await _config._httpClient.get(uri, headers: _config._headers);
     await _checkStatusCode(response.statusCode, response.body,
         reasonPhrase: response.reasonPhrase);
-    List<dynamic> decodedJson = jsonDecode(response.body);
+    final List<dynamic> decodedJson = jsonDecode(response.body);
     return decodedJson.map((json) => Language.fromJson(json)).toList();
   }
 }
@@ -814,16 +690,16 @@ class Languages {
 ///
 /// Takes an [authKey] to check and returns [True] if the key is associated with
 /// a free account, otherwise [False].
-bool isFreeAccountAuthKey(String authKey) => authKey.endsWith(':fx');
+bool isFreeAccountAuthKey(final String authKey) => authKey.endsWith(':fx');
 
 /// Builds an URI to send a request to.
-Uri _buildUri(String serverUrl, String path,
+Uri _buildUri(final String serverUrl, final String path,
     {Map<String, String>? urlSearchParams}) {
-  StringBuffer sb = StringBuffer(serverUrl);
+  final StringBuffer sb = StringBuffer(serverUrl);
   sb.write(path);
   sb.write('?');
   if (urlSearchParams != null) {
-    String paramsString =
+    final String paramsString =
         urlSearchParams.entries.map((e) => '${e.key}=${e.value}').join('&');
     sb.write(paramsString);
   }
@@ -832,26 +708,28 @@ Uri _buildUri(String serverUrl, String path,
 
 /// Checks the HTTP status code, and in case of failure, throws an exception with diagnostic information.
 Future<void> _checkStatusCode(
-  int statusCode,
-  String content, {
-  String? reasonPhrase = 'Unknown',
-  bool usingGlossary = false,
-  bool inDocumentDownload = false,
+  final int statusCode,
+  final String content, {
+  final String? reasonPhrase = 'Unknown',
+  final bool usingGlossary = false,
+  final bool inDocumentDownload = false,
 }) async {
   if (200 <= statusCode && statusCode < 400) return;
-  String message = '';
+  final StringBuffer sb = StringBuffer();
   try {
-    Map<String, dynamic> jsonObj = jsonDecode(content);
+    final Map<String, dynamic> jsonObj = jsonDecode(content);
     if (jsonObj['message'] != null) {
-      message += ', message: ${jsonObj['message']}';
+      sb.write(', message: ${jsonObj['message']}');
     }
     if (jsonObj['detail'] != null) {
-      message += ', detail: ${jsonObj['detail']}';
+      sb.write(', detail: ${jsonObj['detail']}');
     }
   } catch (error) {
     // JSON parsing errors are ignored, and we fall back to the raw content
-    message = ', $content';
+    sb.clear();
+    sb.write(', $content');
   }
+  final String message = sb.toString();
   switch (statusCode) {
     case 403:
       throw AuthorizationError(
@@ -893,13 +771,9 @@ Future<void> _checkStatusCode(
 Map<String, String> _buildURLSearchParams({
   String? sourceLang,
   required String targetLang,
-  String? formality,
-  String? glossaryId,
+  final String? formality,
+  final String? glossaryId,
 }) {
-  assert(targetLang != 'en',
-      "targetLang='en' is deprecated, please use 'en-GB' or 'en-US' instead.");
-  assert(targetLang != 'pt',
-      "targetLang='pt' is deprecated, please use 'pt-PT' or 'pt-BR' instead.");
   targetLang = _standardizeLanguageCode(targetLang);
   if (sourceLang != null) {
     sourceLang = _standardizeLanguageCode(sourceLang);
@@ -907,7 +781,7 @@ Map<String, String> _buildURLSearchParams({
   if (glossaryId != null && sourceLang == null) {
     throw DeepLError(message: 'sourceLang is required if using a glossary');
   }
-  Map<String, String> urlSearchParams = {
+  final Map<String, String> urlSearchParams = {
     'target_lang': targetLang,
   };
   if (sourceLang != null) {
@@ -929,9 +803,9 @@ Map<String, String> _buildURLSearchParams({
 /// Takes [langCode] containing language code to standardize.
 ///
 /// Returns standardized language code.
-String _standardizeLanguageCode(String langCode) {
+String _standardizeLanguageCode(final String langCode) {
   assert(langCode.isNotEmpty, 'langCode must be a non-empty string');
-  List<String> parts = langCode.split('-');
+  final List<String> parts = langCode.split('-');
   return parts.length < 2 || parts[1].isEmpty
       ? parts[0].toLowerCase()
       : '${parts[0].toLowerCase()}-${parts[1].toUpperCase()}';
@@ -943,7 +817,7 @@ String _standardizeLanguageCode(String langCode) {
 /// Takes [langCode] string containing language code to convert.
 ///
 /// Returns language code with regional variant removed.
-String _nonRegionalLanguageCode(String langCode) {
+String _nonRegionalLanguageCode(final String langCode) {
   assert(langCode.isNotEmpty, 'langCode must be a non-empty string');
   return langCode.split('-')[0].toLowerCase();
 }
