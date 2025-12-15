@@ -6,22 +6,22 @@ part 'product.g.dart';
 @JsonSerializable(createToJson: false)
 class Product {
   /// The type of product (e.g., 'write', 'translate').
-  final String productType;
+  final String? productType;
 
   /// The billing unit for this product type.
-  final BillingUnit billingUnit;
+  final BillingUnit? billingUnit;
 
   /// Units used for this product by this API key in the current period.
-  final int apiKeyUnitCount;
+  final int? apiKeyUnitCount;
 
   /// Total units used for this product in the current period.
-  final int accountUnitCount;
+  final int? accountUnitCount;
 
   Product({
-    required this.productType,
-    required this.billingUnit,
-    required this.apiKeyUnitCount,
-    required this.accountUnitCount,
+    this.productType,
+    this.billingUnit,
+    this.apiKeyUnitCount,
+    this.accountUnitCount,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) =>
